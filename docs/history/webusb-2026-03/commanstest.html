@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BC125AT WebUSB Interface</title>
+    <script>
+        let device;
+
+        async function connectUSB() {
+            try {
+                device = await navigator.usb.requestDevice({ filters: [{ vendorId: 0x1234 }] }); // Replace with actual Vendor ID
+                await device.open();
+                await device.selectConfiguration(1);
+                await device.claimInterface(0);
+                document.getElementById("status").innerText = "Connected to Scanner";
+            } catch (error) {
+                console.error(error);
+                document.getElementById("status").innerText = "Connection failed";
+            }
+        }
+
+        async function sendCommand() {
+            if (!device) {
+                alert("Connect to the scanner first.");
+                return;
+            }
+            let command = document.getElementById("command").value;
+            let encoder = new TextEncoder();
+            let data = encoder.encode(command + "\r");
+
+            try {
+                await device.transferOut(1, data);
+                let response = await device.transferIn(1, 64);
+                let decoder = new TextDecoder();
+                document.getElementById("result").value = decoder.decode(response.data);
+            } catch (error) {
+                console.error(error);
+                document.getElementById("result").value = "Error sending command";
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1>BC125AT WebUSB Interface</h1>
+    <button onclick="connectUSB()">Connect to Scanner</button>
+    <p id="status">Not connected</p>
+    
+    <label for="command">Select Command:</label>
+    <select id="command">
+        <option value="INFO">INFO</option>
+        <option value="FREQ?">FREQ?</option>
+        <option value="SCAN">SCAN</option>
+    </select>
+    <button onclick="sendCommand()">Send Command</button>
+    
+    <br><br>
+    <label for="result">Result:</label>
+    <textarea id="result" rows="4" cols="50" readonly></textarea>
+</body>
+</html>

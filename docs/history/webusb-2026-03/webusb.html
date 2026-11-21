@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebUSB in LiveCode</title>
+</head>
+<body>
+    <button id="connect">Connect to USB</button>
+    <p id="status">No device connected</p>
+
+    <script>
+        document.getElementById("connect").addEventListener("click", async () => {
+            try {
+                const device = await navigator.usb.requestDevice({ filters: [] });
+                await device.open();
+                document.getElementById("status").innerText = "Connected to: " + device.productName;
+            } catch (error) {
+                document.getElementById("status").innerText = "Error: " + error.message;
+            }
+        });
+    </script>
+</body>
+</html>

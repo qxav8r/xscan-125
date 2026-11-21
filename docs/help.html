@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>xScan-125 Help</title>
+<style>
+  :root { --ink:#1d2430; --muted:#5a6475; --line:#d8dde5; --accent:#1f5fbf; --bg:#ffffff; --code:#f2f4f7; }
+  @media (prefers-color-scheme: dark) {
+    :root { --ink:#e4e8ef; --muted:#9aa4b2; --line:#333a46; --accent:#6ea2ff; --bg:#15191f; --code:#222831; }
+  }
+  body { font: 16px/1.55 -apple-system, system-ui, sans-serif; color: var(--ink); background: var(--bg);
+         max-width: 760px; margin: 32px auto; padding: 0 20px; }
+  h1 { font-size: 30px; margin: 0 0 4px; }
+  h2 { font-size: 20px; margin: 32px 0 8px; padding-bottom: 4px; border-bottom: 1px solid var(--line); }
+  h3 { font-size: 16px; margin: 18px 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 20px; }
+  a { color: var(--accent); }
+  code { background: var(--code); padding: 1px 5px; border-radius: 4px; font: 14px ui-monospace, Menlo, monospace; }
+  pre { background: var(--code); padding: 10px 12px; border-radius: 6px; overflow-x: auto; font: 14px ui-monospace, Menlo, monospace; }
+  table { border-collapse: collapse; width: 100%; margin: 8px 0; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; }
+  .soon { color: var(--muted); font-style: italic; }
+  .links a { margin-right: 18px; }
+  footer { margin: 40px 0 20px; color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+
+<h1>xScan-125</h1>
+<p class="sub">Program a Uniden BC125AT scanner from your Mac. An OpenXTalk / xTalk-family stack (HyperXTalk, OpenXTalk, LiveCode).</p>
+
+<p class="links">
+  <a href="https://github.com/qxav8r/xscan-125">xScan-125 on GitHub</a>
+  <a href="https://github.com/costamesatechsolutions/bc125at-tool">bc125at-tool</a>
+</p>
+
+<h2>Getting started</h2>
+<p>xScan-125 is the front end. The talking to the scanner is done by <b>bc125at-tool</b>, which you install once.</p>
+<p><b>xScan-125 is a stack, not a standalone app</b> — it runs inside a free xTalk development app (IDE).</p>
+<ol>
+  <li><b>HyperXTalk</b> — install it from <a href="https://github.com/emily-elizabeth/HyperXTalk">GitHub</a> (free, macOS 13 or later). xScan-125 is built and tested in HyperXTalk; <a href="https://www.openxtalk.org">OpenXTalk</a> or LiveCode should also work but aren't tested yet.</li>
+  <li><b>Homebrew</b> — install from <a href="https://brew.sh">brew.sh</a> if you don't have it.</li>
+  <li><b>libusb</b> — in Terminal: <code>brew install libusb</code></li>
+  <li><b>bc125at-tool</b> — download it from <a href="https://github.com/costamesatechsolutions/bc125at-tool">GitHub</a>
+      (put it in your home folder), then in Terminal:
+      <pre>cd ~/bc125at-tool
+./setup.sh</pre></li>
+  <li>Plug in the scanner with its USB cable and turn it on.</li>
+  <li>Open the xScan-125 stack in HyperXTalk and click <b>Initialize</b>.</li>
+</ol>
+
+<h2>Initialize</h2>
+<p>The scanner buttons stay greyed out until Initialize passes. Every time you open the stack, click Initialize first. It checks:</p>
+<table>
+  <tr><th>Check</th><th>If it fails</th></tr>
+  <tr><td>Homebrew</td><td>Install from <a href="https://brew.sh">brew.sh</a></td></tr>
+  <tr><td>libusb</td><td><code>brew install libusb</code></td></tr>
+  <tr><td>bc125at-tool folder</td><td>Found automatically (see below), or you're asked to pick it</td></tr>
+  <tr><td>Python environment</td><td>Run <code>./setup.sh</code> inside the bc125at-tool folder</td></tr>
+  <tr><td>Scanner</td><td>Check power and cable, then click Initialize again</td></tr>
+</table>
+<p>When everything shows ✓ you'll see <b>Ready.</b> and the scanner buttons turn on.</p>
+
+<h3>How the bc125at-tool folder is found</h3>
+<p>On every Initialize, xScan-125 looks in the usual places — your home folder, Documents, Desktop, Downloads,
+Documents/GitHub and the folder next to the stack — then asks Spotlight for any folder named
+<code>bc125at-tool…</code> (including <code>bc125at-tool-main</code> from a ZIP download).
+A folder only counts once <code>./setup.sh</code> has been run in it.</p>
+<p><b>Trade-off:</b> the folder isn't remembered between sessions. If you keep it somewhere unusual, under a name
+Spotlight won't match, you'll be asked to pick it each time. Keeping it in your home folder as
+<code>bc125at-tool</code> avoids that.</p>
+
+<h2>Buttons</h2>
+<table>
+  <tr><th>Button</th><th>What it does</th></tr>
+  <tr><td>Scanner Info</td><td>Model, firmware, what's on the display, current settings and which banks are on.</td></tr>
+  <tr><td>Read Banks</td><td>Saves every programmed channel to <code>xScan-125_Channels_&lt;date&gt;.csv</code> on your Desktop and opens a channel report in your browser — one table per bank, with a filter box. Takes about a minute.</td></tr>
+  <tr><td>Export Channels</td><td>Saves all programmed channels to a CSV file. Do this before any big change — it's your backup.</td></tr>
+  <tr><td>Import Channels</td><td>Writes a CSV file to the scanner. Channels in the file overwrite what's there.</td></tr>
+  <tr><td>Load Presets</td><td class="soon">Coming soon — load a ready-made list (marine, weather, railroad, aviation …) into a bank.</td></tr>
+  <tr><td>Manage Banks</td><td class="soon">Coming soon — turn banks on or off for scanning.</td></tr>
+  <tr><td>Settings</td><td>Opens the Settings palette with the scanner's current settings. See below.</td></tr>
+  <tr><td>Help</td><td>This page.</td></tr>
+</table>
+
+<h2>Settings</h2>
+<p>The Settings palette reads the scanner when it opens, so it always starts from what the scanner really has.
+Change what you like and click <b>Apply</b>: only the changed settings are sent, then the scanner is read back
+and each change is marked <b>✓ kept</b> or <b>⚠ not kept</b> in the main window. The palette stays open and shows
+the scanner's real values. <b>Read Scanner</b> re-reads at any time; <b>Close</b> (or Esc) closes it.</p>
+<h3>Weather alert turns itself off</h3>
+<p>Weather alert only stays on when the scanner can hear a NOAA weather station. If it can't, the scanner turns
+it back off by itself and briefly shows <b>No WX Reception</b> — that's the scanner's own design (see the BC125AT
+manual, Weather Alert Priority), so xScan-125 reports it as <b>⚠ not kept</b>. Check reception with the scanner's
+WX key, raise the antenna or move near a window, then try again.</p>
+
+<h2>Editing channels</h2>
+<p>There's no channel editor in the stack yet. The easy way is a round trip:</p>
+<ol>
+  <li><b>Export Channels</b> to a CSV file.</li>
+  <li>Open the CSV in Numbers or Excel, edit names, frequencies, banks — then save it as CSV.</li>
+  <li><b>Import Channels</b> and pick the edited file.</li>
+</ol>
+<p>Columns: <code>channel, name, frequency, modulation, tone, tone_code, delay, lockout, priority, bank</code>.
+Names are cut to 16 characters by the scanner.</p>
+
+<h2>Banks and channels</h2>
+<p>The BC125AT has 500 channels in 10 banks of 50. Bank 1 is channels 1–50, bank 2 is 51–100 … bank 9 is 401–450,
+and the tenth bank — shown as <b>0</b> on the scanner — is channels 451–500.</p>
+
+<h2>Troubleshooting</h2>
+<ul>
+  <li><b>Scanner not responding</b> right after plugging in — click Initialize again; the first try sometimes misses.</li>
+  <li><b>Only one program at a time</b> can talk to the scanner. Close other scanner apps or Terminal sessions using bc125at-tool.</li>
+  <li><b>Odd characters</b> in raw scanner output are the scanner's display icons (signal, battery) — harmless.</li>
+</ul>
+
+<h2>Credits</h2>
+<p>All scanner communication is handled by
+<a href="https://github.com/costamesatechsolutions/bc125at-tool">bc125at-tool</a> by Costa Mesa Tech Solutions
+(AGPL-3.0). xScan-125 runs it as a separate program. Thank you to its developers.</p>
+<p>Uniden and BC125AT are trademarks of Uniden. xScan-125 is not affiliated with Uniden.</p>
+
+<footer>xScan-125 · © 2026 QXAV8R · MIT License · <a href="https://github.com/qxav8r/xscan-125">github.com/qxav8r/xscan-125</a></footer>
+</body>
+</html>

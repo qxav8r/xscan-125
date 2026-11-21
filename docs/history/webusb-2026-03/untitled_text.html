@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>BC125AT WebUSB Test</title>
+    <script>
+        let device;
+
+        async function connectScanner() {
+            try {
+                device = await navigator.usb.requestDevice({ filters: [{ vendorId: 0x1965 }] }); // Adjust vendorId if needed
+                await device.open();
+                await device.selectConfiguration(1);
+                await device.claimInterface(0);
+
+                document.getElementById("status").innerText = "Connected to Scanner!";
+            } catch (error) {
+                document.getElementById("status").innerText = "Error: " + error.message;
+            }
+        }
+
+        async function getScannerAttributes() {
+            if (!device) {
+                document.getElementById("status").innerText = "Not Connected!";
+                return;
+            }
+
+            const commands = ["MDL\r", "VER\r", "SN\r"];
+            let results = {};
+
+            for (let cmd of commands) {
+                let encoder = new TextEncoder();
+                await device.transferOut(2, encoder.encode(cmd));
+
+                let response = await device.transferIn(1, 64);
+                let textDecoder = new TextDecoder();
+                results[cmd.trim()] = textDecoder.decode(response.data).trim();
+            }
+
+            document.getElementById("output").innerText = JSON.stringify(results, null, 2);
+        }
+
+        async function disconnectScanner() {
+            if (device) {
+                await device.close();
+                document.getElementById("status").innerText = "Disconnected";
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1>Uniden BC125AT WebUSB Test</h1>
+    <button onclick="connectScanner()">Connect to Scanner</button>
+    <button onclick="getScannerAttributes()">Get Scanner Info</button>
+    <button onclick="disconnectScanner()">Disconnect</button>
+    <p id="status">Status: Not Connected</p>
+    <pre id="output"></pre>
+</body>
+</html>

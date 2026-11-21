@@ -1,0 +1,1449 @@
+================================================
+xScan-125 Script Inventory — xScan-125
+Generated:   2026-11-21 3:03 PM
+Stack name:  xscan-125
+Label:       xScan-125
+File:        ~/Documents/GitHub/xscan-125/xscan-125.v1.hyperxtalk
+Engine:      0.9.15 (development)
+Platform:    MacOS arm64 27.2.1
+Window:      800,780
+Cards:       1
+Substacks:   0
+================================================
+
+[ STACK ] xscan-125
+ *** HAS SCRIPT ***
+- - - - - - - - - - - - - - - - - - - - - - - -
+-- ============================================================
+--  xScan-125 -- Stack Script
+--  An OpenXTalk / xTalk-family front end for bc125at-tool
+--  (https://github.com/costamesatechsolutions/bc125at-tool),
+--  which is called as an external program (AGPL-3.0, not included).
+--
+--  Copyright (c) 2026 QXAV8R. MIT License -- see LICENSE.
+-- ============================================================
+--  STATUS: prototype (11/21/26).
+--    Live buttons:  Initialize, Scanner Info, Read Banks,
+--                   Import Channels, Export Channels,
+--                   Settings, Help
+--    Stubs:         Load Presets, Manage Banks ("Coming soon")
+--  Developer utilities, left in on purpose:
+--    option-click  = inventoryStack (writes Desktop + repo copy)
+--    control-click = formatObjects  (lays out and styles the UI)
+--
+--  STARTUP FLOW
+--    openStack: Browse tool, scanner buttons disabled.
+--    Initialize: checks Homebrew, libusb, finds bc125at-tool,
+--    checks its Python environment, then talks to the scanner.
+--    Scanner buttons are enabled only when every check passes.
+--    Nothing is saved between sessions -- the tool folder is
+--    found fresh on each Initialize.
+--
+--  READ BANKS (channel report)
+--    Exports every programmed channel to the Desktop as
+--    xScan-125_Channels_<date>.csv, builds a separate page
+--    xScan-125_Channels_<date>.html from it (system fonts/colors,
+--    light/dark, filter box, alternating rows, print-friendly)
+--    and opens it in the browser. Same day replaces both files.
+--
+--  SETTINGS PALETTE ("ScannerSettings", built on the fly like
+--  Floggy's LogTen Export; destroyStack, rebuilt on every open)
+--    Opens with the scanner's live values. Read Scanner re-reads.
+--    Apply sends only what changed -- band plan first, then top to
+--    bottom -- re-reads the scanner and marks each change kept (✓)
+--    or not kept (⚠). The palette stays open; Close or Esc closes.
+--
+--  TODO:
+--   - Load Presets: bc125at-tool's built-in presets ("presets
+--     list/show/load") into a bank the user picks.
+--   - Manage Banks: palette with 10 checkboxes (B1-B9, B0) to turn
+--     banks on/off for scanning ("banks --enable/--disable").
+--     Channel editing stays Export -> edit CSV -> Import for now.
+--
+--  KNOWN BEHAVIOR:
+--   - Weather alert: the scanner accepts WXS,1 but turns it back
+--     off by itself when it can't hear a NOAA station ("No WX
+--     Reception" -- BC125AT manual, Weather Alert Priority).
+--     Settings reports it as "not kept". Documented in Help.
+--
+--  HELP NOTES (for the Help page, docs/help.html):
+--   - bc125at-tool is found automatically on every Initialize:
+--     usual places (home, Documents, Desktop, Downloads,
+--     Documents/GitHub, next to the stack), then a Spotlight
+--     search for any folder named bc125at-tool*.
+--   - Trade-off: the folder is not remembered. If it lives
+--     somewhere unusual, under a name Spotlight won't match,
+--     you'll be asked to pick it each session.
+--   - A folder only counts once ./setup.sh has been run in it
+--     (it needs its .venv Python environment).
+--   - First Initialize right after plugging the scanner in can
+--     fail -- just click Initialize again.
+-- ============================================================
+
+constant kRepoFolder = "xscan-125"
+constant kScannerBtns = "Scanner Info,Read Banks,Import Channels,Export Channels,Load Presets,Manage Banks,Settings"
+
+global gToolPath   -- bc125at-tool folder found this session
+
+-- ---- Startup + Initialize ------------------------------------
+-- On open: Browse tool, scanner buttons disabled.
+-- Initialize runs the setup checklist into fld "Data" and enables
+-- the scanner buttons only when everything passes. Help stays
+-- enabled so it works even when a check fails.
+
+on openStack
+   choose browse tool
+   setScannerButtons false
+   put "Click Initialize to check your setup and connect to the scanner." \
+         into fld "Data" of card 1 of this stack
+end openStack
+
+command setScannerButtons pOn
+   local tB
+   repeat for each item tB in kScannerBtns
+      if there is a button tB of card 1 of this stack then
+         set the enabled of button tB of card 1 of this stack to pOn
+      end if
+   end repeat
+end setScannerButtons
+
+command initializeScanner
+   local tReport, tOK, tTool, tLib, tResult, tLine
+   setScannerButtons false
+   put true into tOK
+   put "INITIALIZE" & cr & cr into tReport
+
+   -- 1. Homebrew
+   if there is a file "/opt/homebrew/bin/brew" or there is a file "/usr/local/bin/brew" then
+      put "✓ Homebrew" & cr after tReport
+   else
+      put "✗ Homebrew not found -- install it from https://brew.sh" & cr after tReport
+      put false into tOK
+   end if
+
+   -- 2. libusb
+   put libUsbPath() into tLib
+   if tLib is not empty and there is a file (tLib & "/libusb-1.0.dylib") then
+      put "✓ libusb" & cr after tReport
+   else
+      put "✗ libusb not found -- in Terminal run:  brew install libusb" & cr after tReport
+      put false into tOK
+   end if
+
+   -- 3. bc125at-tool folder (asks once if not saved yet)
+   put tReport into fld "Data" of card 1 of this stack
+   put toolPath() into tTool
+   if tTool is empty then
+      put "✗ bc125at-tool folder not set -- click Initialize and choose it" & cr after tReport
+      put false into tOK
+   else
+      put "✓ bc125at-tool folder: " & tildePath(tTool) & cr after tReport
+      -- 4. its Python environment
+      if there is a file (tTool & "/.venv/bin/python3") then
+         put "✓ bc125at-tool Python environment" & cr after tReport
+      else
+         put "✗ Python environment missing -- in Terminal:  cd " & quote & tTool & quote & \
+               "  then  ./setup.sh" & cr after tReport
+         put false into tOK
+      end if
+   end if
+
+   if not tOK then
+      put cr & "Fix the items marked ✗, then click Initialize again." after tReport
+      put tReport into fld "Data" of card 1 of this stack
+      exit initializeScanner
+   end if
+
+   -- 5. Scanner
+   put tReport & cr & "Connecting to scanner..." into fld "Data" of card 1 of this stack
+   wait 0 with messages
+   put runTool("info") into tResult
+   if tResult contains "Model:" then
+      repeat for each line tLine in tResult
+         if tLine begins with "Model:" or tLine begins with "Firmware:" then
+            put "✓ " & word 1 to -1 of tLine & cr after tReport
+         end if
+      end repeat
+      put cr & "Ready." after tReport
+      setScannerButtons true
+   else
+      put "✗ Scanner not responding -- check it is powered on and plugged in," & cr & \
+            "   then click Initialize again (the first try after plugging in" & cr & \
+            "   sometimes fails)." & cr after tReport
+   end if
+   put tReport into fld "Data" of card 1 of this stack
+end initializeScanner
+
+-- ---- Settings palette -----------------------------------------
+-- Settings button -> openSettingsPalette. Rows come from
+-- settingsRows(): key | name | hint | kind (radio/popup) | values |
+-- labels. Each control carries uKey / uVal. sSetOrig holds the
+-- values last read from the scanner; the summary line counts the
+-- differences. All references to the main window name it
+-- explicitly (stack "xscan-125"), because the palette can be the
+-- defaultStack while these handlers run.
+
+constant kSetStack = "ScannerSettings"
+local sSetOrig      -- array: key -> value last read from the scanner
+local sSetRead      -- time of that read
+
+command openSettingsPalette
+   put "Reading settings from the scanner..." into fld "Data" of card 1 of stack "xscan-125"
+   wait 0 with messages
+   if not settingsReadScanner() then
+      put "Could not read settings from the scanner. Check it's on and connected, then try again." \
+            into fld "Data" of card 1 of stack "xscan-125"
+      exit openSettingsPalette
+   end if
+   put "Settings read from the scanner at" && sSetRead & "." into fld "Data" of card 1 of stack "xscan-125"
+   buildSettingsPalette
+   show stack kSetStack
+   palette stack kSetStack
+end openSettingsPalette
+
+-- Read the scanner's settings into sSetOrig; true if it worked
+function settingsReadScanner
+   local tResult, tLine, tKey
+   put runTool("settings show") into tResult
+   if not (tResult contains "volume:") then return false
+   put empty into sSetOrig
+   repeat for each line tLine in tResult
+      put word 1 of tLine into tKey
+      if char -1 of tKey is ":" then
+         delete char -1 of tKey
+         put word 2 of tLine into sSetOrig[tKey]
+      end if
+   end repeat
+   put the time into sSetRead
+   return true
+end settingsReadScanner
+
+function settingsRows
+   local tRows
+   put "volume|Volume|Speaker volume. 0 is silent.|popup|" & numberList(0,15) & "|" & return into tRows
+   put "squelch|Squelch|Higher numbers need a stronger signal to open.|popup|" & numberList(0,15) & "|" & return after tRows
+   put "contrast|Contrast|Display contrast.|popup|" & numberList(1,15) & "|" & return after tRows
+   put "backlight|Backlight|When the display lights up.|radio|AO,AF,KY,SQ,KS|Always on,Always off,Keypress,Squelch,Key + squelch" & return after tRows
+   put "priority|Priority|Priority channel checking while scanning.|radio|0,1,2,3|Off,On,Plus on,Do not disturb" & return after tRows
+   put "keybeep|Key beep|Beep on key presses.|radio|0,99|Auto,Off" & return after tRows
+   put "keylock|Key lock|Locks the scanner's keypad.|radio|0,1|Off,On" & return after tRows
+   put "wxalert|Weather alert|NOAA alert tone while scanning. Needs a weather station in range.|radio|0,1|Off,On" & return after tRows
+   put "bandplan|Band plan|Frequency steps for your country.|radio|0,1|USA,Canada" & return after tRows
+   put "battery|Battery charge|Charge time for batteries in the scanner, in hours.|popup|" & numberList(1,16) & "|" after tRows
+   return tRows
+end settingsRows
+
+function numberList pFrom, pTo
+   local tList, i
+   repeat with i = pFrom to pTo
+      put i & comma after tList
+   end repeat
+   delete char -1 of tList
+   return tList
+end numberList
+
+-- Display name of a setting ("wxalert" -> "Weather alert")
+function settingName pKey
+   local tRow
+   set the itemDelimiter to "|"
+   repeat for each line tRow in settingsRows()
+      if item 1 of tRow is pKey then return item 2 of tRow
+   end repeat
+   return pKey
+end settingName
+
+-- Display label of a value ("wxalert", 0 -> "Off"; popups -> the number)
+function settingLabel pKey, pVal
+   local tRow, tVals, tNames, i
+   set the itemDelimiter to "|"
+   repeat for each line tRow in settingsRows()
+      if item 1 of tRow is pKey then
+         put item 5 of tRow into tVals
+         put item 6 of tRow into tNames
+         set the itemDelimiter to comma
+         if tNames is empty then return pVal
+         repeat with i = 1 to the number of items of tVals
+            if item i of tVals is pVal then return item i of tNames
+         end repeat
+         return pVal
+      end if
+   end repeat
+   return pVal
+end settingLabel
+
+on buildSettingsPalette
+   local tRows, tRow, tKey, tName, tHint, tKind, tVals, tNames, tCur
+   local tWinW, tY, tFam, tF, tB, tV, tRadios, tColW, tColX, tC, tR, tScr
+   local tBtns, tBtnRow, tWinRect, tCX, tCY, tMenu
+   if there is a stack kSetStack then delete stack kSetStack
+
+   create invisible stack kSetStack
+   set the title of stack kSetStack to "Scanner Settings"
+   set the resizable of stack kSetStack to false
+   set the destroyStack of stack kSetStack to true
+   set the defaultStack to kSetStack
+
+   put 470 into tWinW
+   put 14 into tY
+   put empty into tRadios
+   put 0 into tFam
+   put settingsRows() into tRows
+   set the itemDelimiter to "|"
+   repeat for each line tRow in tRows
+      put item 1 of tRow into tKey
+      put item 2 of tRow into tName
+      put item 3 of tRow into tHint
+      put item 4 of tRow into tKind
+      put item 5 of tRow into tVals
+      put item 6 of tRow into tNames
+      put sSetOrig[tKey] into tCur
+      add 1 to tFam
+      set the itemDelimiter to comma
+
+      -- name (bold) and hint (smaller, dimmed) --
+      create field ("lbl_" & tKey) in cd 1 of stack kSetStack
+      put it into tF
+      set the lockText of tF to true
+      set the showBorder of tF to false
+      set the opaque of tF to false
+      set the traversalOn of tF to false
+      set the dontWrap of tF to true
+      set the textStyle of tF to "bold"
+      set the rect of tF to 12, tY, tWinW - 12, tY + 20
+      set the text of tF to tName
+
+      create field ("desc_" & tKey) in cd 1 of stack kSetStack
+      put it into tF
+      set the lockText of tF to true
+      set the showBorder of tF to false
+      set the opaque of tF to false
+      set the traversalOn of tF to false
+      set the dontWrap of tF to true
+      set the blendLevel of tF to 35
+      set the textSize of tF to 11
+      set the rect of tF to 12, tY + 18, tWinW - 12, tY + 36
+      set the text of tF to tHint
+
+      if tKind is "popup" then
+         -- numbers: native popup menu
+         create button ("pop_" & tKey) in cd 1 of stack kSetStack
+         put it into tB
+         set the style of tB to "menu"
+         set the menuMode of tB to "option"
+         put tVals into tMenu
+         replace comma with return in tMenu
+         set the text of tB to tMenu
+         set the label of tB to tCur
+         set the uKey of tB to tKey
+         set the uVal of tB to tCur
+         set the rect of tB to 24, tY + 38, 104, tY + 60
+      else
+         -- choices: plain macOS radios (no border box around the selected one)
+         repeat with tV = 1 to the number of items of tVals
+            create button ("opt_" & tKey & "_" & item tV of tVals) in cd 1 of stack kSetStack
+            put it into tB
+            set the style of tB to "radioButton"
+            set the threeD of tB to false
+            set the showBorder of tB to false
+            set the hiliteBorder of tB to false
+            set the borderWidth of tB to 0
+            set the opaque of tB to false
+            set the family of tB to tFam
+            set the label of tB to item tV of tNames
+            set the uKey of tB to tKey
+            set the uVal of tB to item tV of tVals
+            set the showFocusBorder of tB to false
+            set the traversalOn of tB to false
+            set the rect of tB to 24, tY + 38, 324, tY + 58
+            set the hilite of tB to (item tV of tVals is tCur)
+            put tV & tab & (tY + 38) & tab & tB & return after tRadios
+            if tColW[tV] is empty then put 0 into tColW[tV]
+            put max(tColW[tV], the formattedWidth of tB + 4) into tColW[tV]
+         end repeat
+      end if
+      add 64 to tY
+      set the itemDelimiter to "|"
+   end repeat
+   set the itemDelimiter to comma
+
+   -- radios in aligned columns (Floggy layout) --
+   put 24 into tColX[1]
+   repeat with tC = 2 to 5
+      if tColW[tC - 1] is empty then put 0 into tColW[tC - 1]
+      put tColX[tC - 1] + tColW[tC - 1] + 18 into tColX[tC]
+   end repeat
+   -- widen the window if the widest row (Backlight, 5 choices) needs it
+   if tColW[5] is empty then put 0 into tColW[5]
+   put max(tWinW, tColX[5] + tColW[5] + 24) into tWinW
+
+   set the itemDelimiter to tab
+   repeat for each line tR in tRadios
+      if tR is empty then next repeat
+      put item 1 of tR into tC
+      put item 3 of tR into tB
+      set the rect of tB to tColX[tC], item 2 of tR, tColX[tC] + tColW[tC], item 2 of tR + 20
+   end repeat
+   set the itemDelimiter to comma
+
+   -- summary line --
+   create field "summary" in cd 1 of stack kSetStack
+   put it into tF
+   set the lockText of tF to true
+   set the showBorder of tF to false
+   set the opaque of tF to false
+   set the traversalOn of tF to false
+   set the dontWrap of tF to true
+   set the rect of tF to 12, tY, tWinW - 12, tY + 22
+   add 34 to tY
+
+   -- buttons: Read Scanner on the left, Close + Apply on the right --
+   put "btnRead|Read Scanner|12|130" & return & \
+         "btnClose|Close|" & (tWinW - 196) & "|86" & return & \
+         "btnApply|Apply|" & (tWinW - 102) & "|90" into tBtns
+   set the itemDelimiter to "|"
+   repeat for each line tBtnRow in tBtns
+      create button (item 1 of tBtnRow) in cd 1 of stack kSetStack
+      put it into tB
+      set the style of tB to "standard"
+      set the label of tB to item 2 of tBtnRow
+      set the showFocusBorder of tB to false
+      set the rect of tB to item 3 of tBtnRow, tY, item 3 of tBtnRow + item 4 of tBtnRow, tY + 26
+   end repeat
+   set the itemDelimiter to comma
+   set the default of btn "btnApply" of cd 1 of stack kSetStack to true
+   add 40 to tY
+
+   -- card script: everything calls back into the main stack --
+   put "on mouseUp" & return into tScr
+   put "   put the short name of the target into tT" & return after tScr
+   put "   if tT is `btnApply` then" & return after tScr
+   put "      send `settingsApply` to stack `xscan-125`" & return after tScr
+   put "   else if tT is `btnClose` then" & return after tScr
+   put "      send `settingsClose` to stack `xscan-125`" & return after tScr
+   put "   else if tT is `btnRead` then" & return after tScr
+   put "      send `settingsReread` to stack `xscan-125`" & return after tScr
+   put "   else" & return after tScr
+   put "      send `settingsRefresh` to stack `xscan-125`" & return after tScr
+   put "   end if" & return after tScr
+   put "end mouseUp" & return & return after tScr
+   put "on menuPick pItem" & return after tScr
+   put "   set the label of the target to pItem" & return after tScr
+   put "   set the uVal of the target to pItem" & return after tScr
+   put "   send `settingsRefresh` to stack `xscan-125`" & return after tScr
+   put "end menuPick" & return & return after tScr
+   put "on escapeKey" & return after tScr
+   put "   send `settingsClose` to stack `xscan-125`" & return after tScr
+   put "end escapeKey" & return & return after tScr
+   put "on returnKey" & return after tScr
+   put "   send `settingsApply` to stack `xscan-125`" & return after tScr
+   put "end returnKey" & return & return after tScr
+   put "on enterKey" & return after tScr
+   put "   send `settingsApply` to stack `xscan-125`" & return after tScr
+   put "end enterKey" & return & return after tScr
+   put "on commandKeyDown pKey" & return after tScr
+   put "   if pKey is `w` then" & return after tScr
+   put "      send `settingsClose` to stack `xscan-125`" & return after tScr
+   put "      exit commandKeyDown" & return after tScr
+   put "   end if" & return after tScr
+   put "   pass commandKeyDown" & return after tScr
+   put "end commandKeyDown" & return after tScr
+   replace "`" with quote in tScr
+   set the script of cd 1 of stack kSetStack to tScr
+
+   -- size and place: centred over the main window --
+   put the rect of stack "xscan-125" into tWinRect
+   put (item 1 of tWinRect + item 3 of tWinRect) div 2 into tCX
+   put (item 2 of tWinRect + item 4 of tWinRect) div 2 into tCY
+   set the rect of stack kSetStack to tCX - (tWinW div 2), tCY - (tY div 2), \
+         tCX - (tWinW div 2) + tWinW, tCY - (tY div 2) + tY
+   set the defaultStack to "xscan-125"
+   settingsRefresh
+end buildSettingsPalette
+
+-- Current choices in the palette: key -> value
+function settingsChoices
+   local tChoices, tBi, tB, tKey
+   repeat with tBi = 1 to the number of buttons of cd 1 of stack kSetStack
+      put the long id of btn tBi of cd 1 of stack kSetStack into tB
+      put the uKey of tB into tKey
+      if tKey is not empty then
+         if the style of tB is "radioButton" then
+            if the hilite of tB then
+               put the uVal of tB into tChoices[tKey]
+            end if
+         else
+            put the uVal of tB into tChoices[tKey]
+         end if
+      end if
+   end repeat
+   return tChoices
+end settingsChoices
+
+-- Number of choices that differ from the last scanner read
+function settingsChangeCount
+   local tChoices, tKey, tN
+   put settingsChoices() into tChoices
+   put 0 into tN
+   repeat for each key tKey in tChoices
+      if tChoices[tKey] is not sSetOrig[tKey] then add 1 to tN
+   end repeat
+   return tN
+end settingsChangeCount
+
+-- Set every control to the values in sSetOrig
+command settingsShowValues
+   local tBi, tB, tKey
+   repeat with tBi = 1 to the number of buttons of cd 1 of stack kSetStack
+      put the long id of btn tBi of cd 1 of stack kSetStack into tB
+      put the uKey of tB into tKey
+      if tKey is not empty then
+         if the style of tB is "radioButton" then
+            set the hilite of tB to (the uVal of tB is sSetOrig[tKey])
+         else
+            set the label of tB to sSetOrig[tKey]
+            set the uVal of tB to sSetOrig[tKey]
+         end if
+      end if
+   end repeat
+end settingsShowValues
+
+-- Summary line: when read, how many unsent changes
+on settingsRefresh
+   local tN
+   if there is not a stack kSetStack then exit settingsRefresh
+   put settingsChangeCount() into tN
+   if tN = 0 then
+      set the text of fld "summary" of cd 1 of stack kSetStack to "Read from scanner" && sSetRead & " · no changes"
+   else if tN = 1 then
+      set the text of fld "summary" of cd 1 of stack kSetStack to "Read from scanner" && sSetRead & " · 1 change"
+   else
+      set the text of fld "summary" of cd 1 of stack kSetStack to "Read from scanner" && sSetRead & " · " & tN & " changes"
+   end if
+end settingsRefresh
+
+-- Read Scanner button: update every control from the scanner
+on settingsReread
+   local tN
+   if there is not a stack kSetStack then exit settingsReread
+   put settingsChangeCount() into tN
+   if tN > 0 then
+      answer "Discard your" && tN && "unsaved change(s) and read the scanner again?" with "Cancel" or "Read Scanner"
+      if it is "Cancel" then exit settingsReread
+   end if
+   set the text of fld "summary" of cd 1 of stack kSetStack to "Reading the scanner..."
+   wait 0 with messages
+   if not settingsReadScanner() then
+      set the text of fld "summary" of cd 1 of stack kSetStack to "Couldn't read the scanner -- check it's on and connected."
+      exit settingsReread
+   end if
+   settingsShowValues
+   settingsRefresh
+end settingsReread
+
+-- Apply: send only what changed (band plan first, then top to
+-- bottom), re-read the scanner, report kept / not kept. The palette
+-- stays open and shows the scanner's real values afterwards.
+on settingsApply
+   local tChoices, tOrder, tRow, tKey, tChanged, tResult, tReport
+   local tKept, tLost, tSendErr, tN
+   if there is not a stack kSetStack then exit settingsApply
+   put settingsChoices() into tChoices
+
+   -- order: band plan first (it can reset other settings)
+   put "bandplan" into tOrder
+   set the itemDelimiter to "|"
+   repeat for each line tRow in settingsRows()
+      if item 1 of tRow is not "bandplan" then put comma & item 1 of tRow after tOrder
+   end repeat
+   set the itemDelimiter to comma
+
+   put empty into tChanged
+   repeat for each item tKey in tOrder
+      if tChoices[tKey] is not sSetOrig[tKey] then put tKey & comma after tChanged
+   end repeat
+   if tChanged is empty then
+      set the text of fld "summary" of cd 1 of stack kSetStack to "No changes to send."
+      exit settingsApply
+   end if
+   delete char -1 of tChanged
+
+   -- send each change --
+   disable btn "btnApply" of cd 1 of stack kSetStack
+   put empty into tSendErr
+   repeat for each item tKey in tChanged
+      set the text of fld "summary" of cd 1 of stack kSetStack to "Setting" && settingName(tKey) & "..."
+      wait 0 with messages
+      put runTool("settings" && tKey && tChoices[tKey]) into tResult
+      if not (tResult contains "Set ") then put word 1 to -1 of tResult into tSendErr[tKey]
+   end repeat
+
+   -- re-read and check what the scanner kept --
+   set the text of fld "summary" of cd 1 of stack kSetStack to "Checking the scanner..."
+   wait 0 with messages
+   if not settingsReadScanner() then
+      enable btn "btnApply" of cd 1 of stack kSetStack
+      set the text of fld "summary" of cd 1 of stack kSetStack to "Sent, but couldn't read the scanner back to check."
+      exit settingsApply
+   end if
+
+   put 0 into tKept
+   put 0 into tLost
+   put "SETTINGS  (applied" && sSetRead & ")" & cr & cr into tReport
+   repeat for each item tKey in tChanged
+      if sSetOrig[tKey] is tChoices[tKey] then
+         add 1 to tKept
+         put "✓ " & settingName(tKey) & ": " & settingLabel(tKey, tChoices[tKey]) & cr after tReport
+      else
+         add 1 to tLost
+         put "⚠ " & settingName(tKey) & ": asked for " & settingLabel(tKey, tChoices[tKey]) & \
+               ", scanner has " & settingLabel(tKey, sSetOrig[tKey]) after tReport
+         if tSendErr[tKey] is not empty then put "  (" & tSendErr[tKey] & ")" after tReport
+         put cr after tReport
+      end if
+   end repeat
+   put tReport into fld "Data" of card 1 of stack "xscan-125"
+
+   -- palette now shows the scanner's real values --
+   settingsShowValues
+   enable btn "btnApply" of cd 1 of stack kSetStack
+   if tLost = 0 then
+      set the text of fld "summary" of cd 1 of stack kSetStack to "Applied" && sSetRead & " · all" && tKept && "kept ✓"
+   else
+      set the text of fld "summary" of cd 1 of stack kSetStack to "Applied" && sSetRead & " · " & tKept & " kept, " & \
+            tLost & " not kept ⚠ (see main window)"
+   end if
+end settingsApply
+
+-- Close / Esc / Cmd-W: close the palette (unsent changes are dropped)
+on settingsClose
+   if there is a stack kSetStack then close stack kSetStack
+end settingsClose
+
+-- ---- Channel report (Read Banks) ------------------------------
+-- Export -> CSV on the Desktop, then an HTML page built from that
+-- CSV, opened with launch document (the browser can read the
+-- Desktop; it can't read HXT's temporary folder).
+
+command viewChannels
+   local tToday, tBase, tCSV, tHTML, tResult, tInfo, tLine, tModel, tFirm
+   local tBanksOn, tText, tRows, tCount
+   put isoToday() into tToday
+   put specialFolderPath("desktop") & "/xScan-125_Channels_" & tToday into tBase
+   put tBase & ".csv" into tCSV
+   put tBase & ".html" into tHTML
+
+   -- 1. export to CSV --
+   put "Reading all 500 channels from the scanner (about a minute)..." into fld "Data" of card 1 of stack "xscan-125"
+   wait 0 with messages
+   put runTool("export" && quote & tCSV & quote) into tResult
+   if not (tResult contains "Exported") then
+      put "Export failed:" & cr & tResult into fld "Data" of card 1 of stack "xscan-125"
+      exit viewChannels
+   end if
+
+   -- 2. model, firmware, which banks are on --
+   put "Reading bank status..." into fld "Data" of card 1 of stack "xscan-125"
+   wait 0 with messages
+   put runTool("info") into tInfo
+   repeat for each line tLine in tInfo
+      if tLine begins with "Model:" then put word 2 to -1 of tLine into tModel
+      if tLine begins with "Firmware:" then put word 2 to -1 of tLine into tFirm
+      if tLine begins with "Banks:" then put tLine into tBanksOn
+   end repeat
+
+   -- 3. read the CSV back and build the page --
+   put textDecode(URL ("binfile:" & tCSV), "UTF-8") into tText
+   replace numToChar(13) with empty in tText
+   put channelsHTML(tText, tModel, tFirm, tBanksOn, tToday && the time) into tRows
+   put 0 into tCount
+   repeat for each line tLine in line 2 to -1 of tText
+      if tLine is not empty then add 1 to tCount
+   end repeat
+   put textEncode(tRows, "UTF-8") into URL ("binfile:" & tHTML)
+   if the result is not empty then
+      put "Could not write the HTML page:" && the result into fld "Data" of card 1 of stack "xscan-125"
+      exit viewChannels
+   end if
+   launch document tHTML
+
+   put "READ BANKS" & cr & cr & \
+         "✓ " & tCount & " programmed channels read" & cr & \
+         "✓ CSV:  Desktop/xScan-125_Channels_" & tToday & ".csv" & cr & \
+         "✓ Page: Desktop/xScan-125_Channels_" & tToday & ".html (opened in your browser)" \
+         into fld "Data" of card 1 of stack "xscan-125"
+end viewChannels
+
+-- "2026-11-21"
+function isoToday
+   local tNow
+   put the seconds into tNow
+   convert tNow to dateItems
+   return item 1 of tNow & "-" & format("%02d", item 2 of tNow) & "-" & format("%02d", item 3 of tNow)
+end isoToday
+
+-- Build the HTML page from bc125at-tool's export CSV
+-- (columns: channel,name,frequency,modulation,tone,tone_code,
+--  delay,lockout,priority,bank)
+function channelsHTML pCSV, pModel, pFirm, pBanksLine, pWhen
+   local tH, tCols, tF, i, tLine, tBank, tByBank, tCnt, tOrder, b, tOn, tFlags
+   local tTone, tFreq, tTotal, tRow
+
+   -- column positions from the header row --
+   put csvSplit(line 1 of pCSV) into tCols
+   set the itemDelimiter to tab
+   repeat with i = 1 to the number of items of tCols
+      put i into tF[item i of tCols]
+   end repeat
+
+   -- sort rows into banks --
+   put 0 into tTotal
+   repeat for each line tRow in line 2 to -1 of pCSV
+      if tRow is empty then next repeat
+      put csvSplit(tRow) into tLine
+      put item tF["bank"] of tLine into tBank
+      put tLine & return after tByBank[tBank]
+      add 1 to tCnt[tBank]
+      add 1 to tTotal
+   end repeat
+
+   -- page head --
+   put "<!DOCTYPE html><html lang='en'><head><meta charset='utf-8'>" & return into tH
+   put "<meta name='viewport' content='width=device-width, initial-scale=1'>" & return after tH
+   put "<title>xScan-125 Channels " & htmlEsc(pWhen) & "</title>" & return after tH
+   put "<style>" & return after tH
+   put ":root { color-scheme: light dark; }" & return after tH
+   put "body { font: 14px -apple-system, system-ui, sans-serif; margin: 24px; }" & return after tH
+   put "h1 { font-size: 22px; margin: 0 0 4px; }" & return after tH
+   put ".meta { color: GrayText; margin: 0 0 14px; }" & return after tH
+   put "input { font: inherit; padding: 4px 8px; width: 280px; margin-bottom: 6px; }" & return after tH
+   put "h2 { font-size: 16px; margin: 26px 0 6px; }" & return after tH
+   put "h2 span { color: GrayText; font-weight: normal; }" & return after tH
+   put "table { border-collapse: collapse; width: 100%; max-width: 920px; }" & return after tH
+   put "th { text-align: left; font-weight: 600; padding: 4px 8px; border-bottom: 1px solid GrayText; }" & return after tH
+   put "td { padding: 3px 8px; white-space: nowrap; }" & return after tH
+   put "td.n { text-align: right; font-variant-numeric: tabular-nums; }" & return after tH
+   put "tbody tr:nth-child(even) { background: rgba(127,127,127,0.12); }" & return after tH
+   put "@media print { input { display: none; } section { break-inside: avoid; } }" & return after tH
+   put "</style>" & return after tH
+   put "<script>function f(q){q=q.toLowerCase();" & \
+         "document.querySelectorAll('tbody tr').forEach(function(r){" & \
+         "r.style.display=r.textContent.toLowerCase().indexOf(q)<0?'none':'';});" & \
+         "document.querySelectorAll('section').forEach(function(s){" & \
+         "var v=s.querySelectorAll('tbody tr:not([style*=none])').length;" & \
+         "s.style.display=v?'':'none';});}</script>" & return after tH
+   put "</head><body>" & return after tH
+
+   put "<h1>xScan-125 Channels</h1>" & return after tH
+   put "<p class='meta'>" & htmlEsc(pModel) && "· Firmware" && htmlEsc(pFirm) && "· " & \
+         tTotal && "programmed channels · read" && htmlEsc(pWhen) & "</p>" & return after tH
+   put "<input type='search' placeholder='Filter by name, frequency, tone...' oninput='f(this.value)'>" & return after tH
+
+   -- banks in scanner order: 1-9 then 0 (channels 451-500) --
+   put "1,2,3,4,5,6,7,8,9,0" into tOrder
+   set the itemDelimiter to comma
+   repeat for each item b in tOrder
+      if tCnt[b] is empty then next repeat
+      if pBanksLine contains ("✓ B" & b) then
+         put "scanning on" into tOn
+      else
+         put "scanning off" into tOn
+      end if
+      put "<section><h2>Bank " & b after tH
+      if b is 0 then put " <span>(channels 451–500)</span>" after tH
+      put " <span>· " & tCnt[b] && "channels ·" && tOn & "</span></h2>" & return after tH
+      put "<table><thead><tr><th>CH</th><th>Name</th><th>Frequency</th><th>Mod</th>" & \
+            "<th>Tone</th><th>Delay</th><th>Flags</th></tr></thead><tbody>" & return after tH
+      set the itemDelimiter to tab
+      repeat for each line tLine in tByBank[b]
+         if tLine is empty then next repeat
+         put item tF["tone"] of tLine into tTone
+         if tTone is "None" then put empty into tTone
+         put item tF["frequency"] of tLine into tFreq
+         if tFreq is a number then put format("%.4f", tFreq) into tFreq
+         put empty into tFlags
+         if item tF["priority"] of tLine is "True" then put "PRI " after tFlags
+         if item tF["lockout"] of tLine is "True" then put "L/O" after tFlags
+         put "<tr><td class='n'>" & item tF["channel"] of tLine & "</td>" & \
+               "<td>" & htmlEsc(item tF["name"] of tLine) & "</td>" & \
+               "<td class='n'>" & tFreq & "</td>" & \
+               "<td>" & item tF["modulation"] of tLine & "</td>" & \
+               "<td>" & htmlEsc(tTone) & "</td>" & \
+               "<td class='n'>" & item tF["delay"] of tLine & "</td>" & \
+               "<td>" & word 1 to -1 of tFlags & "</td></tr>" & return after tH
+      end repeat
+      set the itemDelimiter to comma
+      put "</tbody></table></section>" & return after tH
+   end repeat
+
+   put "<p class='meta' style='margin-top:28px'>xScan-125 · github.com/qxav8r/xscan-125</p>" & return after tH
+   put "</body></html>" & return after tH
+   return tH
+end channelsHTML
+
+-- One CSV line -> tab-delimited fields (handles "quoted, fields")
+function csvSplit pLine
+   local tFields, tField, tInQ, i, n, c
+   put false into tInQ
+   put the number of chars of pLine into n
+   put 1 into i
+   repeat while i <= n
+      put char i of pLine into c
+      if tInQ then
+         if c is quote then
+            if char (i + 1) of pLine is quote then
+               put quote after tField
+               add 1 to i
+            else
+               put false into tInQ
+            end if
+         else
+            put c after tField
+         end if
+      else
+         if c is quote then
+            put true into tInQ
+         else if c is comma then
+            put tField & tab after tFields
+            put empty into tField
+         else
+            put c after tField
+         end if
+      end if
+      add 1 to i
+   end repeat
+   put tField after tFields
+   return tFields
+end csvSplit
+
+function htmlEsc pText
+   replace "&" with "&amp;" in pText
+   replace "<" with "&lt;" in pText
+   replace ">" with "&gt;" in pText
+   replace quote with "&quot;" in pText
+   return pText
+end htmlEsc
+
+-- ---- bc125at-tool location -----------------------------------
+-- Found fresh each session (cached in gToolPath until quit):
+--   1) gToolPath, if already found this session
+--   2) usual places, then a Spotlight search
+--   3) only if both fail, ask the user (with a hint)
+-- A folder only counts if it has the bc125at package AND its
+-- Python environment (.venv/bin/python3), i.e. setup.sh was run.
+-- Nothing is saved -- see HELP NOTES in the header for the
+-- trade-off.
+
+function toolPath
+   if isToolFolder(gToolPath) then return gToolPath   -- already found this session
+
+   put findToolFolder() into gToolPath
+   if gToolPath is not empty then return gToolPath
+
+   answer folder "xScan-125 couldn't find bc125at-tool on this Mac." & cr & \
+         "Select the bc125at-tool folder -- the one with setup.sh and a" & cr & \
+         "bc125at folder inside. It's usually in your home folder."
+   if it is empty then
+      put empty into gToolPath
+      return empty
+   end if
+   if not isToolFolder(it) then
+      answer "That folder isn't a ready-to-use bc125at-tool." & cr & cr & \
+            "If you just downloaded it, open Terminal, cd into that folder" & cr & \
+            "and run ./setup.sh, then click Initialize again." & cr & cr & \
+            "Download: https://github.com/costamesatechsolutions/bc125at-tool"
+      put empty into gToolPath
+      return empty
+   end if
+   put it into gToolPath
+   return gToolPath
+end toolPath
+
+-- True if pPath is a bc125at-tool folder that has been set up
+function isToolFolder pPath
+   if pPath is empty then return false
+   if there is not a folder (pPath & "/bc125at") then return false
+   return there is a file (pPath & "/.venv/bin/python3")
+end isToolFolder
+
+-- Usual places first, then Spotlight (any folder named bc125at-tool*,
+-- which also catches "bc125at-tool-main" from a GitHub zip download)
+function findToolFolder
+   local tHome, tList, tPath, tFound
+   put specialFolderPath("home") into tHome
+   put tHome & "/bc125at-tool" & cr & \
+         tHome & "/Documents/bc125at-tool" & cr & \
+         tHome & "/Desktop/bc125at-tool" & cr & \
+         tHome & "/Downloads/bc125at-tool" & cr & \
+         tHome & "/Downloads/bc125at-tool-main" & cr & \
+         tHome & "/Documents/GitHub/bc125at-tool" & cr & \
+         tHome & "/Documents/GitHub/xscan-125/bc125at-tool" & cr & \
+         stackFolder() & "/bc125at-tool" into tList
+   repeat for each line tPath in tList
+      if isToolFolder(tPath) then return tPath
+   end repeat
+
+   put shell("mdfind 'kMDItemFSName == " & quote & "bc125at-tool*" & quote & "c' 2>/dev/null") into tFound
+   repeat for each line tPath in tFound
+      if isToolFolder(tPath) then return tPath
+   end repeat
+   return empty
+end findToolFolder
+
+-- Folder this stack file is in
+function stackFolder
+   local tPath
+   put the effective filename of this stack into tPath
+   set the itemDelimiter to "/"
+   return item 1 to -2 of tPath
+end stackFolder
+
+-- Homebrew libusb: Apple Silicon first, then Intel. No $(brew ...)
+-- because shell() doesn't load your login profile.
+function libUsbPath
+   if there is a folder "/opt/homebrew/opt/libusb/lib" then return "/opt/homebrew/opt/libusb/lib"
+   if there is a folder "/usr/local/opt/libusb/lib" then return "/usr/local/opt/libusb/lib"
+   return empty
+end libUsbPath
+
+-- ---- One shared call to bc125at-tool -------------------------
+-- pArgs = everything after "bc125at", e.g. "info",
+-- "channels --bank 3", "import <quoted path>".
+-- Returns UTF-8-decoded output with progress-bar lines ("Writing [",
+-- "Reading [") removed;
+-- empty if no tool folder or no output.
+-- Shows the watch cursor, so every scanner button gets it for free.
+
+function runTool pArgs
+   local tTool, tLib, tCmd, tResult, tClean, tLine
+   set the cursor to watch   -- busy cursor while the scanner works (resets when handlers finish)
+   put toolPath() into tTool
+   if tTool is empty then return empty
+
+   put "cd " & quote & tTool & quote & " && " into tCmd
+   put libUsbPath() into tLib
+   if tLib is not empty then
+      put "DYLD_LIBRARY_PATH=" & quote & tLib & quote & " " after tCmd
+   end if
+   put "./.venv/bin/python3 -m bc125at " & pArgs after tCmd
+
+   put textDecode(shell(tCmd), "UTF8") into tResult
+   repeat for each line tLine in tResult
+      if not (tLine contains "Writing [" or tLine contains "Reading [") then
+         put tLine & cr after tClean
+      end if
+   end repeat
+   return tClean
+end runTool
+
+-- ---- Dev tool dispatcher -------------------------------------
+
+on mouseUp
+   if the optionKey is "down" then
+      inventoryStack
+   else if the controlKey is "down" then
+      formatObjects
+   else
+      pass mouseUp
+   end if
+end mouseUp
+
+-- ---- Layout tool (control-click) -----------------------------
+-- Lays out the 9 buttons in a left column and sizes the Data field.
+-- Also styles the buttons as native macOS push buttons ("standard"
+-- style with threeD on -- the same look as the palette's Close/Apply).
+-- Native push buttons draw at a fixed height: 28 px buttons on a
+-- 38 px step. (threeD false or taller buttons fall back to the old
+-- flat look with a heavy outline.)
+
+on formatObjects
+   local tNames, tB, tTop, i
+   put "Initialize,Scanner Info,Read Banks,Import Channels,Export Channels,Load Presets,Manage Banks,Settings,Help" into tNames
+   put 12 into tTop
+   repeat with i = 1 to the number of items of tNames
+      put item i of tNames into tB
+      if there is a button tB of card 1 of this stack then
+         set the style of button tB of card 1 of this stack to "standard"
+         set the threeD of button tB of card 1 of this stack to true
+         set the showBorder of button tB of card 1 of this stack to true
+         set the showFocusBorder of button tB of card 1 of this stack to false
+         set the rect of button tB of card 1 of this stack to 12, tTop, 160, tTop + 28
+      end if
+      add 38 to tTop
+   end repeat
+   set the rect of field "Data" of card 1 of this stack to "170,10,790,770"
+end formatObjects
+
+-- ---- Inventory tool (option-click) ---------------------------
+-- Modeled on Floggy's footer inventory (header block, stack,
+-- backgrounds, cards with groups/buttons/fields and their owners,
+-- handler index, dated Desktop copy + fixed-name repo copy).
+-- Added for xScan-125:
+--   - stack label, window size, substacks (each walked the same way)
+--   - behaviors: shows the behavior reference AND the behavior's script
+--   - graphics, images, players, scrollbars, widgets (name + script)
+--   - index also lists command / private / getProp / setProp handlers
+--   - shared (background) groups and their controls listed once,
+--     then "(listed on card N)" on later cards
+--   - home folder shown as ~ so no username goes into the repo
+-- Desktop: <label>_Inventory_<ISO date>.txt  (same day replaces)
+-- Repo:    ~/Documents/GitHub/xscan-125/<stack name>_inventory.txt
+
+constant kRule = "- - - - - - - - - - - - - - - - - - - - - - - -"
+local sIndex, sSeen
+
+command inventoryStack
+   local tReport, tStack, tName, tNow, tToday, tSub, tFileName, tFile, tRepo, tMsg
+   put empty into sIndex
+   put empty into sSeen
+   put the short name of this stack into tStack
+   put the label of this stack into tName
+   if tName is empty then put tStack into tName
+
+   put the seconds into tNow
+   convert tNow to dateItems
+   put item 1 of tNow & "-" & format("%02d", item 2 of tNow) & "-" & \
+         format("%02d", item 3 of tNow) into tToday
+
+   put "================================================" & return into tReport
+   put "xScan-125 Script Inventory — " & tName & return after tReport
+   put "Generated:   " & tToday && the time & return after tReport
+   put "Stack name:  " & tStack & return after tReport
+   put "Label:       " & the label of this stack & return after tReport
+   put "File:        " & tildePath(the effective filename of this stack) & return after tReport
+   put "Engine:      " & the version & " (" & the environment & ")" & return after tReport
+   put "Platform:    " & the platform && the processor && the systemVersion & return after tReport
+   put "Window:      " & the width of this stack & "," & the height of this stack & return after tReport
+   put "Cards:       " & the number of cards of this stack & return after tReport
+   put "Substacks:   " & the number of lines of the substacks of this stack & return after tReport
+   put "================================================" & return & return after tReport
+
+   put inventoryOneStack(tStack) after tReport
+   repeat for each line tSub in the substacks of this stack
+      put return & "################ SUBSTACK " & tSub & " ################" & return & return after tReport
+      put inventoryOneStack(tSub) after tReport
+   end repeat
+
+   put "================================================" & return after tReport
+   put "HANDLER / FUNCTION INDEX" & return after tReport
+   put "================================================" & return after tReport
+   put sIndex & return after tReport
+
+   -- Desktop copy: label + ISO date (same day replaces)
+   put tName & "_Inventory_" & tToday & ".txt" into tFileName
+   replace "/" with "-" in tFileName
+   replace ":" with "-" in tFileName
+   put specialFolderPath("desktop") & "/" & tFileName into tFile
+   put textEncode(tReport, "UTF-8") into URL ("binfile:" & tFile)
+   if the result is not empty then
+      answer "Inventory write FAILED:" & cr & tFile & cr & the result
+      exit inventoryStack
+   end if
+   put "Desktop: " & tFileName into tMsg
+
+   -- Repo copy: fixed name so git tracks the history
+   put specialFolderPath("documents") & "/GitHub/" & kRepoFolder into tRepo
+   if there is a folder tRepo then
+      put textEncode(tReport, "UTF-8") into URL ("binfile:" & tRepo & "/" & tStack & "_inventory.txt")
+      if the result is not empty then
+         put cr & "Repo copy FAILED: " & the result after tMsg
+      else
+         put cr & "Repo: " & kRepoFolder & "/" & tStack & "_inventory.txt" after tMsg
+      end if
+   else
+      put cr & "Repo skipped (no folder): " & tildePath(tRepo) after tMsg
+   end if
+   answer tMsg
+end inventoryStack
+
+function inventoryOneStack pStack
+   local tOut, c, x, tCard, tName
+
+   put "[ STACK ] " & pStack & return into tOut
+   put scriptBlock("STACK: " & pStack, the script of stack pStack) & return after tOut
+   if the behavior of stack pStack is not empty then
+      put behaviorBlock("STACK: " & pStack, the behavior of stack pStack) after tOut
+   end if
+
+   put "[ BACKGROUNDS ] " & the number of bgs of stack pStack & return after tOut
+   repeat with x = 1 to the number of bgs of stack pStack
+      put " bg " & the short name of bg x of stack pStack & return after tOut
+   end repeat
+   put return after tOut
+
+   put "[ CARDS ] " & the number of cards of stack pStack & " total" & return & return after tOut
+   repeat with c = 1 to the number of cards of stack pStack
+      put the short name of card c of stack pStack into tCard
+      put "[ CARD " & c & " ] " & tCard & return & return after tOut
+
+      put "-- card script --" & return after tOut
+      put scriptBlock("CARD " & c & ": " & tCard, the script of card c of stack pStack) & return after tOut
+
+      -- groups
+      put "-- groups --" & return after tOut
+      repeat with x = 1 to the number of groups of card c of stack pStack
+         put " group " & the short name of group x of card c of stack pStack after tOut
+         if the label of group x of card c of stack pStack is not empty then
+            put " [" & the label of group x of card c of stack pStack & "]" after tOut
+         end if
+         if the backgroundBehavior of group x of card c of stack pStack then put " (background)" after tOut
+         if seenBefore(the long id of group x of card c of stack pStack, c) then
+            put sSeen["note"] & return after tOut
+         else
+            put return & scriptBlock("GROUP: " & the short name of group x of card c of stack pStack, \
+                  the script of group x of card c of stack pStack) after tOut
+            if the behavior of group x of card c of stack pStack is not empty then
+               put behaviorBlock("GROUP: " & the short name of group x of card c of stack pStack, \
+                     the behavior of group x of card c of stack pStack) after tOut
+            end if
+         end if
+      end repeat
+      put return after tOut
+
+      -- buttons
+      put "-- buttons --" & return after tOut
+      repeat with x = 1 to the number of buttons of card c of stack pStack
+         put the short name of button x of card c of stack pStack into tName
+         put " button " & tName after tOut
+         if the label of button x of card c of stack pStack is not empty then
+            put " [" & the label of button x of card c of stack pStack & "]" after tOut
+         end if
+         put " loc=" & the loc of button x of card c of stack pStack after tOut
+         if the short name of the owner of button x of card c of stack pStack is not tCard then
+            put " (in group: " & the short name of the owner of button x of card c of stack pStack & ")" after tOut
+         end if
+         if seenBefore(the long id of button x of card c of stack pStack, c) then
+            put sSeen["note"] & return after tOut
+         else
+            put return & scriptBlock("BUTTON: " & tName, the script of button x of card c of stack pStack) after tOut
+            if the behavior of button x of card c of stack pStack is not empty then
+               put behaviorBlock("BUTTON: " & tName, the behavior of button x of card c of stack pStack) after tOut
+            end if
+         end if
+      end repeat
+      put return after tOut
+
+      -- fields
+      put "-- fields --" & return after tOut
+      repeat with x = 1 to the number of fields of card c of stack pStack
+         put the short name of field x of card c of stack pStack into tName
+         put " field " & tName & " loc=" & the loc of field x of card c of stack pStack after tOut
+         if the short name of the owner of field x of card c of stack pStack is not tCard then
+            put " (in group: " & the short name of the owner of field x of card c of stack pStack & ")" after tOut
+         end if
+         if seenBefore(the long id of field x of card c of stack pStack, c) then
+            put sSeen["note"] & return after tOut
+         else
+            put return & scriptBlock("FIELD: " & tName, the script of field x of card c of stack pStack) after tOut
+            if the behavior of field x of card c of stack pStack is not empty then
+               put behaviorBlock("FIELD: " & tName, the behavior of field x of card c of stack pStack) after tOut
+            end if
+         end if
+      end repeat
+      put return after tOut
+
+      -- everything else (name + script only)
+      put "-- other controls --" & return after tOut
+      repeat with x = 1 to the number of graphics of card c of stack pStack
+         put " graphic " & the short name of graphic x of card c of stack pStack & return & \
+               scriptBlock("GRAPHIC: " & the short name of graphic x of card c of stack pStack, \
+               the script of graphic x of card c of stack pStack) after tOut
+      end repeat
+      repeat with x = 1 to the number of images of card c of stack pStack
+         put " image " & the short name of image x of card c of stack pStack & return & \
+               scriptBlock("IMAGE: " & the short name of image x of card c of stack pStack, \
+               the script of image x of card c of stack pStack) after tOut
+      end repeat
+      repeat with x = 1 to the number of players of card c of stack pStack
+         put " player " & the short name of player x of card c of stack pStack & return & \
+               scriptBlock("PLAYER: " & the short name of player x of card c of stack pStack, \
+               the script of player x of card c of stack pStack) after tOut
+      end repeat
+      repeat with x = 1 to the number of scrollbars of card c of stack pStack
+         put " scrollbar " & the short name of scrollbar x of card c of stack pStack & return & \
+               scriptBlock("SCROLLBAR: " & the short name of scrollbar x of card c of stack pStack, \
+               the script of scrollbar x of card c of stack pStack) after tOut
+      end repeat
+      repeat with x = 1 to the number of widgets of card c of stack pStack
+         put " widget " & the short name of widget x of card c of stack pStack & return & \
+               scriptBlock("WIDGET: " & the short name of widget x of card c of stack pStack, \
+               the script of widget x of card c of stack pStack) after tOut
+      end repeat
+      put return after tOut
+   end repeat
+   return tOut
+end inventoryOneStack
+
+-- Script text block + adds the script's handlers to the index
+function scriptBlock pLabel, pScript
+   if pScript is empty then return " (no script)" & return
+   addToIndex pLabel, pScript
+   return " *** HAS SCRIPT ***" & return & kRule & return & pScript & return & kRule & return
+end scriptBlock
+
+-- Behavior reference + the behavior object's own script
+function behaviorBlock pLabel, pBehavior
+   local tOut
+   put "   behavior: " & pBehavior & return into tOut
+   put scriptBlock("BEHAVIOR for " & pLabel, the script of pBehavior) after tOut
+   return tOut
+end behaviorBlock
+
+-- True if this object was already listed (shared group on a later card)
+function seenBefore pLongID, pCardNum
+   if sSeen[pLongID] is not empty then
+      put " (listed on card " & sSeen[pLongID] & ")" into sSeen["note"]
+      return true
+   end if
+   put pCardNum into sSeen[pLongID]
+   return false
+end seenBefore
+
+command addToIndex pLabel, pScript
+   local tLine, tW1
+   put return & "── " & pLabel & return after sIndex
+   repeat for each line tLine in pScript
+      put word 1 of tLine into tW1
+      if tW1 is "private" then put word 2 of tLine into tW1
+      if tW1 is among the items of "on,function,command,getProp,setProp,before,after" then
+         if word 1 of tLine is "private" then
+            put "  " & word 1 to 3 of tLine & return after sIndex
+         else
+            put "  " & word 1 to 2 of tLine & return after sIndex
+         end if
+      end if
+   end repeat
+end addToIndex
+
+-- Swap the home folder for ~ (keeps usernames out of the repo)
+function tildePath pPath
+   local tHome
+   put specialFolderPath("home") into tHome
+   if tHome is not empty and pPath begins with tHome then
+      put "~" & char (length(tHome) + 1) to -1 of pPath into pPath
+   end if
+   return pPath
+end tildePath
+
+
+- - - - - - - - - - - - - - - - - - - - - - - -
+
+[ BACKGROUNDS ] 0
+
+[ CARDS ] 1 total
+
+[ CARD 1 ] card id 1002
+
+-- card script --
+ (no script)
+
+-- groups --
+
+-- buttons --
+ button Read Banks loc=86,102
+ *** HAS SCRIPT ***
+- - - - - - - - - - - - - - - - - - - - - - - -
+on mouseUp
+   viewChannels
+end mouseUp
+
+- - - - - - - - - - - - - - - - - - - - - - - -
+ button Scanner Info loc=86,64
+ *** HAS SCRIPT ***
+- - - - - - - - - - - - - - - - - - - - - - - -
+on mouseUp
+   local tResult, tOut, tLine, tDisp, tItem
+   put "Connecting to scanner..." into fld "Data"
+   put runTool("info") into tResult
+   if tResult is empty then
+      put "No response from scanner. Check that it's connected, powered on, " & \
+            "and not in use by another program." into fld "Data"
+      exit mouseUp
+   end if
+   
+   repeat for each line tLine in tResult
+      if tLine begins with "Status:" then
+         -- raw LCD copy: drop icon glyphs and numeric flags, keep the text lines
+         put empty into tDisp
+         set the itemDelimiter to comma
+         repeat for each item tItem in replaceText(tLine, "[^ -~]", "")
+            put word 1 to -1 of tItem into tItem
+            if tItem is empty or tItem is a number or tItem begins with "Status:" then next repeat
+            if tDisp is not empty then put " / " after tDisp
+            put tItem after tDisp
+         end repeat
+         put "Display:  " & tDisp & cr after tOut
+      else
+         put tLine & cr after tOut
+      end if
+   end repeat
+   put tOut into fld "Data"
+end mouseUp
+
+- - - - - - - - - - - - - - - - - - - - - - - -
+ button Export Channels loc=86,178
+ *** HAS SCRIPT ***
+- - - - - - - - - - - - - - - - - - - - - - - -
+on mouseUp
+   local tPath, tResult
+   ask file "Save scanner channels as CSV:" with "bc125at_channels.csv"
+   if it is empty then exit mouseUp
+   put it into tPath
+   if not (tPath ends with ".csv") then put ".csv" after tPath
+   
+   put "Reading all 500 channels from the scanner (about a minute)..." into fld "Data"
+   wait 0 with messages
+   put runTool("export" && quote & tPath & quote) into tResult
+   
+   if tResult is empty then
+      put "No response. Check that the scanner is connected and powered on." into fld "Data"
+   else
+      put tResult & cr & "Saved: " & tPath into fld "Data"
+   end if
+end mouseUp
+
+- - - - - - - - - - - - - - - - - - - - - - - -
+ button Import Channels loc=86,140
+ *** HAS SCRIPT ***
+- - - - - - - - - - - - - - - - - - - - - - - -
+on mouseUp
+   local tCSVPath, tResult
+   answer file "Select the channel CSV to import"
+   if it is empty then exit mouseUp
+   put it into tCSVPath
+   put "Importing" && tCSVPath & "..." into fld "Data"
+   put runTool("import" && quote & tCSVPath & quote) into tResult
+   if tResult is empty then
+      put "No response. Check scanner connection." into fld "Data"
+   else
+      put tResult into fld "Data"
+   end if
+end mouseUp
+
+- - - - - - - - - - - - - - - - - - - - - - - -
+ button Load Presets loc=86,216
+ *** HAS SCRIPT ***
+- - - - - - - - - - - - - - - - - - - - - - - -
+on mouseUp
+   answer "Coming soon:" && the short name of me
+end mouseUp
+
+
+- - - - - - - - - - - - - - - - - - - - - - - -
+ button Manage Banks loc=86,254
+ *** HAS SCRIPT ***
+- - - - - - - - - - - - - - - - - - - - - - - -
+
+
+on mouseUp
+   answer "Coming soon:" && the short name of me
+end mouseUp
+
+- - - - - - - - - - - - - - - - - - - - - - - -
+ button Settings loc=86,292
+ *** HAS SCRIPT ***
+- - - - - - - - - - - - - - - - - - - - - - - -
+on mouseUp
+   openSettingsPalette
+end mouseUp
+
+- - - - - - - - - - - - - - - - - - - - - - - -
+ button Help loc=86,330
+ *** HAS SCRIPT ***
+- - - - - - - - - - - - - - - - - - - - - - - -
+on mouseUp
+   local tFile
+   put specialFolderPath("desktop") & "/xScan-125_Help.html" into tFile
+   put textEncode(the uHelpHTML of this stack, "UTF-8") into URL ("binfile:" & tFile)
+   if the result is not empty then
+      answer "Could not write the help file:" && the result
+      exit mouseUp
+   end if
+   launch document tFile
+end mouseUp
+
+- - - - - - - - - - - - - - - - - - - - - - - -
+ button Initialize loc=86,26
+ *** HAS SCRIPT ***
+- - - - - - - - - - - - - - - - - - - - - - - -
+on mouseUp
+   initializeScanner
+end mouseUp
+
+- - - - - - - - - - - - - - - - - - - - - - - -
+
+-- fields --
+ field Data loc=480,390
+ (no script)
+
+-- other controls --
+
+================================================
+HANDLER / FUNCTION INDEX
+================================================
+
+── STACK: xscan-125
+  on openStack
+  command setScannerButtons
+  command initializeScanner
+  command openSettingsPalette
+  function settingsReadScanner
+  function settingsRows
+  function numberList
+  function settingName
+  function settingLabel
+  on buildSettingsPalette
+  function settingsChoices
+  function settingsChangeCount
+  command settingsShowValues
+  on settingsRefresh
+  on settingsReread
+  on settingsApply
+  on settingsClose
+  command viewChannels
+  function isoToday
+  function channelsHTML
+  function csvSplit
+  function htmlEsc
+  function toolPath
+  function isToolFolder
+  function findToolFolder
+  function stackFolder
+  function libUsbPath
+  function runTool
+  on mouseUp
+  on formatObjects
+  command inventoryStack
+  function inventoryOneStack
+  function scriptBlock
+  function behaviorBlock
+  function seenBefore
+  command addToIndex
+  function tildePath
+
+── BUTTON: Read Banks
+  on mouseUp
+
+── BUTTON: Scanner Info
+  on mouseUp
+
+── BUTTON: Export Channels
+  on mouseUp
+
+── BUTTON: Import Channels
+  on mouseUp
+
+── BUTTON: Load Presets
+  on mouseUp
+
+── BUTTON: Manage Banks
+  on mouseUp
+
+── BUTTON: Settings
+  on mouseUp
+
+── BUTTON: Help
+  on mouseUp
+
+── BUTTON: Initialize
+  on mouseUp
+

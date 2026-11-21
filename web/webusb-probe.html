@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>xScan-125 WebUSB Probe</title>
+<style>
+  body { font: 15px -apple-system, system-ui, sans-serif; max-width: 760px; margin: 24px auto; padding: 0 16px; color: #1d2430; }
+  h1 { font-size: 22px; margin-bottom: 4px; }
+  .sub { color: #5a6475; margin-top: 0; }
+  button { font: inherit; padding: 8px 14px; margin: 4px 6px 4px 0; border-radius: 6px; border: 1px solid #9aa4b2; background: #f4f6f9; cursor: pointer; }
+  button:disabled { opacity: .45; cursor: default; }
+  button.primary { background: #1f5fbf; color: #fff; border-color: #1f5fbf; }
+  #status { margin: 12px 0; font-weight: 600; }
+  pre { background: #10151d; color: #d7e2f0; padding: 12px; border-radius: 6px; min-height: 220px; white-space: pre-wrap; font: 13px ui-monospace, Menlo, monospace; }
+  .note { font-size: 13px; color: #5a6475; }
+</style>
+</head>
+<body>
+<h1>xScan-125 WebUSB Probe</h1>
+<p class="sub">Read-only test: can a web page talk to a Uniden BC125AT? (Chrome or Edge on a desktop.)</p>
+
+<button id="connect" class="primary">Connect scanner</button>
+<button id="mdl" disabled>MDL (model)</button>
+<button id="ver" disabled>VER (firmware)</button>
+<button id="details" disabled>USB details</button>
+<button id="disconnect" disabled>Disconnect</button>
+
+<div id="status">Not connected</div>
+<pre id="log"></pre>
+
+<p class="note">
+Sends only <b>MDL</b> and <b>VER</b>. Nothing is written to the scanner.<br>
+Expected replies: <code>MDL,BC125AT</code> and <code>VER,Version 1.xx.xx</code>.<br>
+Commands per Uniden's BC125AT PC Protocol (docs/reference). Uniden vendor ID 0x1965.<br>
+If "WebUSB not available": open this page from <code>http://localhost</code> (in Terminal:
+<code>cd</code> to this folder, run <code>python3 -m http.server</code>, then open
+<code>http://localhost:8000/webusb-probe.html</code>).
+</p>
+
+<script>
+const UNIDEN_VID = 0x1965;
+let device = null, ifaceNum = null, epIn = null, epOut = null;
+const $ = id => document.getElementById(id);
+const log = msg => { $('log').textContent += msg + '\n'; $('log').scrollTop = 1e9; };
+const setConnected = on => {
+  ['mdl','ver','details','disconnect'].forEach(id => $(id).disabled = !on);
+  $('connect').disabled = on;
+};
+
+if (!('usb' in navigator)) {
+  $('status').textContent = 'WebUSB not available in this browser/page (see note below).';
+  $('connect').disabled = true;
+}
+
+$('connect').onclick = async () => {
+  try {
+    device = await navigator.usb.requestDevice({ filters: [{ vendorId: UNIDEN_VID }] });
+    log(`Picked: ${device.productName || '(no name)'}  VID=0x${device.vendorId.toString(16)} PID=0x${device.productId.toString(16)}`);
+    await device.open();
+    if (device.configuration === null) await device.selectConfiguration(1);
+
+    // Find the interface with bulk IN + bulk OUT (CDC data interface)
+    for (const iface of device.configuration.interfaces) {
+      const alt = iface.alternate;
+      const bin = alt.endpoints.find(e => e.type === 'bulk' && e.direction === 'in');
+      const bout = alt.endpoints.find(e => e.type === 'bulk' && e.direction === 'out');
+      if (bin && bout) { ifaceNum = iface.interfaceNumber; epIn = bin.endpointNumber; epOut = bout.endpointNumber; break; }
+    }
+    if (ifaceNum === null) throw new Error('No bulk IN/OUT interface found (click USB details after connecting).');
+
+    await device.claimInterface(ifaceNum);
+    log(`Claimed interface ${ifaceNum} (bulk in ep ${epIn}, out ep ${epOut})`);
+
+    // Best effort: raise DTR/RTS on the CDC control interface (harmless if refused)
+    try {
+      await device.controlTransferOut({ requestType: 'class', recipient: 'interface',
+        request: 0x22, value: 0x03, index: 0 });
+      log('Control line state set (DTR/RTS).');
+    } catch (e) { log('Control line state skipped: ' + e.message); }
+
+    $('status').textContent = 'Connected';
+    setConnected(true);
+  } catch (e) {
+    $('status').textContent = 'Connect failed';
+    log('ERROR: ' + e.name + ': ' + e.message);
+    if (/claim|access|busy/i.test(e.message))
+      log('-> The OS may already have a driver on this interface (quit other scanner apps / bc125at-tool and retry).');
+  }
+};
+
+async function send(cmd) {
+  const enc = new TextEncoder(), dec = new TextDecoder();
+  log('> ' + cmd);
+  await device.transferOut(epOut, enc.encode(cmd + '\r'));
+  let reply = '';
+  const deadline = Date.now() + 2000;
+  while (!reply.includes('\r') && Date.now() < deadline) {
+    const r = await Promise.race([
+      device.transferIn(epIn, 64),
+      new Promise(res => setTimeout(() => res(null), 500))
+    ]);
+    if (r && r.data && r.data.byteLength) reply += dec.decode(r.data);
+  }
+  log('< ' + (reply.trim() || '(no reply within 2 s)'));
+}
+
+$('mdl').onclick = () => send('MDL').catch(e => log('ERROR: ' + e.message));
+$('ver').onclick = () => send('VER').catch(e => log('ERROR: ' + e.message));
+
+$('details').onclick = () => {
+  const c = device.configuration;
+  log(`Config ${c.configurationValue}, ${c.interfaces.length} interface(s)`);
+  for (const i of c.interfaces) {
+    const a = i.alternate;
+    log(`  iface ${i.interfaceNumber}: class 0x${a.interfaceClass.toString(16)} sub 0x${a.interfaceSubclass.toString(16)} claimed=${i.claimed}`);
+    for (const e of a.endpoints) log(`    ep ${e.endpointNumber} ${e.direction} ${e.type} size ${e.packetSize}`);
+  }
+};
+
+$('disconnect').onclick = async () => {
+  try { await device.close(); } catch (e) {}
+  device = null; ifaceNum = epIn = epOut = null;
+  $('status').textContent = 'Disconnected';
+  setConnected(false);
+  log('Closed.');
+};
+</script>
+</body>
+</html>

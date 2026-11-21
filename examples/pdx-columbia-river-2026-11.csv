@@ -1,0 +1,244 @@
+channel,name,frequency,modulation,tone,tone_code,delay,lockout,priority,bank
+1,PDX ATIS,128.35,AM,None,0,2,False,False,1
+2,PDX ClrncDeliv,120.125,AM,None,0,2,False,False,1
+3,PDX Ground 1,121.9,AM,None,0,2,False,False,1
+4,PDX Ground 2,132.275,AM,None,0,2,False,False,1
+5,PDX Twr 10-28,118.7,AM,None,0,2,False,False,1
+6,PDX Twr 03-21,123.775,AM,None,0,2,False,False,1
+7,PDX App/Dep Hi,118.1,AM,None,0,2,False,False,1
+8,PDX App/Dep,124.35,AM,None,0,2,False,False,1
+9,PDX App Final,126.9,AM,None,0,2,False,True,1
+10,PDX Dep Alt,127.85,AM,None,0,2,False,False,1
+11,PDX FSS,122.6,AM,None,0,2,False,False,1
+12,PDX Unicom,122.95,AM,None,0,2,False,False,1
+13,Guard Civ,121.5,AM,None,0,2,False,False,1
+14,Horizon Ops1,131.35,AM,None,0,2,False,False,1
+15,Horizon Ops2,132.0,AM,None,0,2,False,False,1
+16,Alaska Ops,130.5,AM,None,0,2,False,False,1
+17,ARINC SF Radio,131.8,AM,None,0,2,False,False,1
+18,Delta Ops,131.45,AM,None,0,2,False,False,1
+19,United Ops,129.5,AM,None,0,2,False,False,1
+20,ZSE Sec04 Low,124.2,AM,None,0,2,False,False,1
+21,ZSE Sec06 Low,125.8,AM,None,0,2,False,False,1
+22,ZSE Sec05 Low,128.15,AM,None,0,2,False,False,1
+23,ZSE Sec34 Low,119.65,AM,None,0,2,False,False,1
+24,ZSE Sec42 Hi,132.075,AM,None,0,2,False,False,1
+25,ZSE Sec46 Hi,121.35,AM,None,0,2,False,False,1
+26,ZSE Sec16 Hi,135.45,AM,None,0,2,False,False,1
+51,Mar Ch06 Safety,156.3,NFM,None,0,2,False,False,2
+52,Mar Ch09 Boater,156.45,NFM,None,0,2,False,False,2
+53,Mar Ch13 Bridge-,156.65,NFM,None,0,2,False,False,2
+54,Mar Ch16 Distres,156.8,NFM,None,0,2,False,True,2
+55,Mar Ch17 State N,156.85,NFM,None,0,2,False,False,2
+56,Mar Ch22A USCG/B,157.1,NFM,None,0,2,False,False,2
+57,Mar Ch68 Working,156.425,NFM,None,0,2,False,False,2
+58,Mar Ch69 Working,156.475,NFM,None,0,2,False,False,2
+59,Mar Ch71 Working,156.575,NFM,None,0,2,False,False,2
+60,Mar Ch72 Working,156.625,NFM,None,0,2,False,False,2
+61,Mar Ch78A Workin,156.925,NFM,None,0,2,False,False,2
+62,Mar Ch08 Commerc,156.4,NFM,None,0,2,False,False,2
+63,Mar Ch10 Commerc,156.5,NFM,None,0,2,False,False,2
+64,Mar Ch18A Commer,156.9,NFM,None,0,2,False,False,2
+65,Mar Ch67 Tug/Nav,156.375,NFM,None,0,2,False,False,2
+66,Mar Ch73 Intersh,156.675,NFM,None,0,2,False,False,2
+67,Mar Ch79A Commer,156.975,NFM,None,0,2,False,False,2
+68,Mar Ch80A Commer,157.025,NFM,None,0,2,False,False,2
+69,Port Ops Ch1A,156.05,NFM,None,0,2,False,False,2
+70,Port Ops Ch12,156.6,NFM,None,0,2,False,False,2
+71,Port Ops Ch14,156.7,NFM,None,0,2,False,False,2
+101,CB Ch1,26.965,AM,None,0,2,False,False,3
+102,CB Ch2,26.975,AM,None,0,2,False,False,3
+103,CB Ch3,26.985,AM,None,0,2,False,False,3
+104,CB Ch4,27.005,AM,None,0,2,False,False,3
+105,CB Ch5,27.015,AM,None,0,2,False,False,3
+106,CB Ch6,27.025,AM,None,0,2,False,False,3
+107,CB Ch7,27.035,AM,None,0,2,False,False,3
+108,CB Ch8,27.055,AM,None,0,2,False,False,3
+109,CB Ch9 EMERG,27.065,AM,None,0,2,False,True,3
+110,CB Ch10,27.075,AM,None,0,2,False,False,3
+111,CB Ch11,27.085,AM,None,0,2,False,False,3
+112,CB Ch12,27.105,AM,None,0,2,False,False,3
+113,CB Ch13,27.115,AM,None,0,2,False,False,3
+114,CB Ch14,27.125,AM,None,0,2,False,False,3
+115,CB Ch15,27.135,AM,None,0,2,False,False,3
+116,CB Ch16,27.155,AM,None,0,2,False,False,3
+117,CB Ch17,27.165,AM,None,0,2,False,False,3
+118,CB Ch18,27.175,AM,None,0,2,False,False,3
+119,CB Ch19 TRUCKER,27.185,AM,None,0,2,False,False,3
+120,CB Ch20,27.205,AM,None,0,2,False,False,3
+121,CB Ch21,27.215,AM,None,0,2,False,False,3
+122,CB Ch22,27.225,AM,None,0,2,False,False,3
+123,CB Ch23,27.235,AM,None,0,2,False,False,3
+124,CB Ch24,27.245,AM,None,0,2,False,False,3
+125,CB Ch25,27.255,AM,None,0,2,False,False,3
+126,CB Ch26,27.265,AM,None,0,2,False,False,3
+127,CB Ch27,27.275,AM,None,0,2,False,False,3
+128,CB Ch28,27.285,AM,None,0,2,False,False,3
+129,CB Ch29,27.295,AM,None,0,2,False,False,3
+130,CB Ch30,27.305,AM,None,0,2,False,False,3
+131,CB Ch31,27.315,AM,None,0,2,False,False,3
+132,CB Ch32,27.325,AM,None,0,2,False,False,3
+133,CB Ch33,27.335,AM,None,0,2,False,False,3
+134,CB Ch34,27.345,AM,None,0,2,False,False,3
+135,CB Ch35,27.355,AM,None,0,2,False,False,3
+136,CB Ch36,27.365,AM,None,0,2,False,False,3
+137,CB Ch37,27.375,AM,None,0,2,False,False,3
+138,CB Ch38 LSB,27.385,AM,None,0,2,False,False,3
+139,CB Ch39,27.395,AM,None,0,2,False,False,3
+140,CB Ch40,27.405,AM,None,0,2,False,False,3
+151,Mult Search Resc,155.805,NFM,None,0,2,False,False,4
+152,Mult Emergency M,158.73,NFM,CTCSS 103.5 Hz,77,2,False,False,4
+153,Clark Co Fire Di,154.07,NFM,None,0,2,False,False,4
+154,Clark Co Fire Co,155.655,NFM,None,0,2,False,False,4
+155,Fire Disp 10 (un,153.95,NFM,CTCSS 127.3 Hz,83,2,False,False,4
+201,Clark Co Sheriff,155.07,NFM,None,0,2,False,False,5
+202,WSP Car 1 (State,155.445,NFM,None,0,2,False,False,5
+203,WSP Car 2 (State,155.46,NFM,None,0,2,False,False,5
+204,WSP State Common,155.97,NFM,None,0,2,False,False,5
+205,WSP Tactical,154.77,NFM,None,0,2,False,False,5
+206,WSP D5 Car3 Clar,154.755,NFM,CTCSS 136.5 Hz,85,2,False,False,5
+207,WSP MARS Interop,155.19,NFM,None,0,2,False,False,5
+208,OSP PP1 Portland,154.935,NFM,CTCSS 179.9 Hz,97,2,False,False,5
+209,OSP St Helens,154.905,NFM,CTCSS 179.9 Hz,97,2,False,False,5
+210,OSP Tac1 Repeate,156.03,NFM,CTCSS 156.7 Hz,89,2,False,False,5
+211,OSP Tac2 Direct,156.03,NFM,CTCSS 156.7 Hz,89,2,False,False,5
+212,OSP OPEN Mutual,155.475,NFM,None,0,2,False,False,5
+251,NOAA WX1,162.55,NFM,None,0,2,False,False,6
+252,NOAA WX2,162.4,NFM,None,0,2,False,False,6
+253,NOAA WX3,162.475,NFM,None,0,2,False,False,6
+254,NOAA WX4,162.425,NFM,None,0,2,False,False,6
+255,NOAA WX5,162.45,NFM,None,0,2,False,False,6
+256,NOAA WX6,162.525,NFM,None,0,2,False,False,6
+257,NOAA WX7,162.5,NFM,None,0,2,False,False,6
+301,BNSF Fallbridge,161.25,NFM,None,0,2,False,False,7
+302,BNSF Fallbridge,161.415,NFM,None,0,2,False,False,7
+303,BNSF Willbridge,160.65,NFM,None,0,2,False,False,7
+304,UP Portland-Arli,160.515,NFM,None,0,2,False,False,7
+305,UP Albina Yard,160.68,NFM,None,0,2,False,False,7
+306,PTRC Operations,161.49,NFM,None,0,2,False,False,7
+307,PTRC Switching,161.07,NFM,None,0,2,False,False,7
+308,PTRC Intermodal,161.295,NFM,None,0,2,False,False,7
+309,Amtrak PDX Yard,161.04,NFM,None,0,2,False,False,7
+310,Amtrak PDX Stati,160.35,NFM,None,0,2,False,False,7
+311,WES Yard Ops,160.2975,NFM,None,0,2,False,False,7
+312,WES Conductors,160.845,NFM,None,0,2,False,False,7
+313,WES Track Warran,161.385,NFM,None,0,2,False,False,7
+314,BNSF Seattle-Tuk,161.16,NFM,None,0,2,False,False,7
+315,BNSF Tukwila-Ten,161.415,NFM,None,0,2,False,False,7
+316,BNSF Tenino-NVan,161.1,NFM,None,0,2,False,False,7
+317,BNSF NVanJct-Van,161.25,NFM,None,0,2,False,False,7
+318,BNSF Balmer Yard,160.65,NFM,None,0,2,False,False,7
+319,BNSF Balmer Yard,161.31,NFM,None,0,2,False,False,7
+320,BNSF Stacy Yard,161.01,NFM,None,0,2,False,False,7
+321,UP Portland-Seat,160.515,NFM,None,0,2,False,False,7
+322,UP Fife Yard,160.23,NFM,None,0,2,False,False,7
+323,BNSF Scenic Seat,161.16,NFM,None,0,2,False,False,7
+324,BNSF Scenic MP18,161.25,NFM,None,0,2,False,False,7
+325,BNSF Scenic Lowe,161.1,NFM,None,0,2,False,False,7
+326,BNSF Scenic MOW,160.92,NFM,None,0,2,False,False,7
+327,BNSF ColumbiaRiv,161.1,NFM,None,0,2,False,False,7
+328,BNSF Wenatchee Y,161.16,NFM,None,0,2,False,False,7
+329,BNSF Lakeside Su,161.25,NFM,None,0,2,False,False,7
+330,BNSF Lakeside Ma,161.16,NFM,None,0,2,False,False,7
+331,BNSF Lakeside Pa,161.445,NFM,None,0,2,False,False,7
+332,RR AAR17 Splinte,160.835,NFM,None,0,2,False,False,7
+333,RR AAR19 Splinte,160.565,NFM,None,0,2,False,False,7
+334,RR AAR20 Splinte,160.595,NFM,None,0,2,False,False,7
+335,RR Yard AAR64,160.55,NFM,None,0,2,False,False,7
+336,RR Defect Detect,161.57,NFM,None,0,2,False,False,7
+337,RR EOT Telemetry,161.55,NFM,None,0,2,False,False,7
+351,AAR Ch07,160.215,NFM,None,0,2,False,False,8
+352,AAR Ch08,160.23,NFM,None,0,2,False,False,8
+353,AAR Ch09,160.245,NFM,None,0,2,False,False,8
+354,AAR Ch10,160.26,NFM,None,0,2,False,False,8
+355,AAR Ch11,160.275,NFM,None,0,2,False,False,8
+356,AAR Ch12,160.29,NFM,None,0,2,False,False,8
+357,AAR Ch13,160.305,NFM,None,0,2,False,False,8
+358,AAR Ch14,160.32,NFM,None,0,2,False,False,8
+359,AAR Ch15,160.335,NFM,None,0,2,False,False,8
+360,AAR Ch16,160.35,NFM,None,0,2,False,False,8
+361,AAR Ch17,160.365,NFM,None,0,2,False,False,8
+362,AAR Ch18,160.38,NFM,None,0,2,False,False,8
+363,AAR Ch19,160.395,NFM,None,0,2,False,False,8
+364,AAR Ch20,160.41,NFM,None,0,2,False,False,8
+365,AAR Ch21,160.425,NFM,None,0,2,False,False,8
+366,AAR Ch22,160.44,NFM,None,0,2,False,False,8
+367,AAR Ch23,160.455,NFM,None,0,2,False,False,8
+368,AAR Ch24,160.47,NFM,None,0,2,False,False,8
+369,AAR Ch25,160.485,NFM,None,0,2,False,False,8
+370,AAR Ch26,160.5,NFM,None,0,2,False,False,8
+371,AAR Ch27,160.515,NFM,None,0,2,False,False,8
+372,AAR Ch28,160.53,NFM,None,0,2,False,False,8
+373,AAR Ch29,160.545,NFM,None,0,2,False,False,8
+374,AAR Ch30,160.56,NFM,None,0,2,False,False,8
+375,AAR Ch31,160.575,NFM,None,0,2,False,False,8
+376,AAR Ch32,160.59,NFM,None,0,2,False,False,8
+377,AAR Ch33,160.605,NFM,None,0,2,False,False,8
+378,AAR Ch34,160.62,NFM,None,0,2,False,False,8
+379,AAR Ch35,160.635,NFM,None,0,2,False,False,8
+380,AAR Ch36,160.65,NFM,None,0,2,False,False,8
+381,AAR Ch37,160.665,NFM,None,0,2,False,False,8
+382,AAR Ch38,160.68,NFM,None,0,2,False,False,8
+383,AAR Ch39,160.695,NFM,None,0,2,False,False,8
+384,AAR Ch40,160.71,NFM,None,0,2,False,False,8
+385,AAR Ch41,160.725,NFM,None,0,2,False,False,8
+386,AAR Ch42,160.74,NFM,None,0,2,False,False,8
+387,AAR Ch43,160.755,NFM,None,0,2,False,False,8
+388,AAR Ch44,160.77,NFM,None,0,2,False,False,8
+389,AAR Ch45,160.785,NFM,None,0,2,False,False,8
+390,AAR Ch46,160.8,NFM,None,0,2,False,False,8
+391,AAR Ch47,160.815,NFM,None,0,2,False,False,8
+392,AAR Ch48,160.83,NFM,None,0,2,False,False,8
+393,AAR Ch49,160.845,NFM,None,0,2,False,False,8
+394,AAR Ch50,160.86,NFM,None,0,2,False,False,8
+395,AAR Ch51,160.875,NFM,None,0,2,False,False,8
+396,AAR Ch52,160.89,NFM,None,0,2,False,False,8
+397,AAR Ch53,160.905,NFM,None,0,2,False,False,8
+398,AAR Ch54,160.92,NFM,None,0,2,False,False,8
+399,AAR Ch55,160.935,NFM,None,0,2,False,False,8
+400,AAR Ch56,160.95,NFM,None,0,2,False,False,8
+401,AAR Ch57,160.965,NFM,None,0,2,False,False,9
+402,AAR Ch58,160.98,NFM,None,0,2,False,False,9
+403,AAR Ch59,160.995,NFM,None,0,2,False,False,9
+404,AAR Ch60,161.01,NFM,None,0,2,False,False,9
+405,AAR Ch61,161.025,NFM,None,0,2,False,False,9
+406,AAR Ch62,161.04,NFM,None,0,2,False,False,9
+407,AAR Ch63,161.055,NFM,None,0,2,False,False,9
+408,AAR Ch64,161.07,NFM,None,0,2,False,False,9
+409,AAR Ch65,161.085,NFM,None,0,2,False,False,9
+410,AAR Ch66,161.1,NFM,None,0,2,False,False,9
+411,AAR Ch67,161.115,NFM,None,0,2,False,False,9
+412,AAR Ch68,161.13,NFM,None,0,2,False,False,9
+413,AAR Ch69,161.145,NFM,None,0,2,False,False,9
+414,AAR Ch70,161.16,NFM,None,0,2,False,False,9
+415,AAR Ch71,161.175,NFM,None,0,2,False,False,9
+416,AAR Ch72,161.19,NFM,None,0,2,False,False,9
+417,AAR Ch73,161.205,NFM,None,0,2,False,False,9
+418,AAR Ch74,161.22,NFM,None,0,2,False,False,9
+419,AAR Ch75,161.235,NFM,None,0,2,False,False,9
+420,AAR Ch76,161.25,NFM,None,0,2,False,False,9
+421,AAR Ch77,161.265,NFM,None,0,2,False,False,9
+422,AAR Ch78,161.28,NFM,None,0,2,False,False,9
+423,AAR Ch79,161.295,NFM,None,0,2,False,False,9
+424,AAR Ch80,161.31,NFM,None,0,2,False,False,9
+425,AAR Ch81,161.325,NFM,None,0,2,False,False,9
+426,AAR Ch82,161.34,NFM,None,0,2,False,False,9
+427,AAR Ch83,161.355,NFM,None,0,2,False,False,9
+428,AAR Ch84,161.37,NFM,None,0,2,False,False,9
+429,AAR Ch85,161.385,NFM,None,0,2,False,False,9
+430,AAR Ch86,161.4,NFM,None,0,2,False,False,9
+431,AAR Ch87,161.415,NFM,None,0,2,False,False,9
+432,AAR Ch88,161.43,NFM,None,0,2,False,False,9
+433,AAR Ch89,161.445,NFM,None,0,2,False,False,9
+434,AAR Ch90,161.46,NFM,None,0,2,False,False,9
+435,AAR Ch91,161.475,NFM,None,0,2,False,False,9
+436,AAR Ch92,161.49,NFM,None,0,2,False,False,9
+437,AAR Ch93,161.505,NFM,None,0,2,False,False,9
+438,AAR Ch94,161.52,NFM,None,0,2,False,False,9
+439,AAR Ch95,161.535,NFM,None,0,2,False,False,9
+440,AAR Ch96,161.55,NFM,None,0,2,False,False,9
+441,AAR Ch97,161.565,NFM,None,0,2,False,False,9
+451,Unknown UHF,451.0375,NFM,None,0,2,False,False,0
+452,Horizon QX Ramp,460.675,FM,None,0,2,False,False,0
+453,Horizon QX Mtx (,461.8875,FM,None,0,2,False,False,0
+454,Camas/Larch Mtn,146.84,FM,None,0,2,False,False,0

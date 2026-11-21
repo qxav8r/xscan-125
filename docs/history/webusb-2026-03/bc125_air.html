@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Program PDX Frequencies into BC125AT Bank 10</title>
+    <script src="bc125at.js"></script>
+    <script>
+        var require = { paths: { "vs": "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs" } };
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs/loader.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs/editor/editor.main.nls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs/editor/editor.main.js"></script>
+</head>
+<body>
+
+<h1>Program PDX Frequencies into BC125AT Bank 10</h1>
+<h2 style="color: red">USE AT YOUR OWN RISK.</h2>
+<p>This tool allows you to program Portland International Airport frequencies into Bank 10 of your Uniden BC125AT scanner using WebUSB.</p>
+<p>Your current browser may or may not be supported. (As of April 2023, this is only supported by a limited number of browsers such as Chrome and Edge.)</p>
+
+<h3>Programming Frequencies into Bank 10</h3>
+<p>Click the button below to program the PDX frequencies into Bank 10 of your BC125AT scanner.</p>
+
+<button id="program_bank10" type="button" onclick="programBank10()">Program Bank 10 with PDX Frequencies</button>
+
+<div>
+    <div style="float: left">
+        <h3>Commands to send</h3>
+        <div id="input"
+             style="height: 360px; width: 550px; border: 1px solid black; margin-right: 3px">
+            <!-- Commands will be displayed here -->
+        </div>
+        <br>
+        <button id="send" type="button" onclick="sendCommands()">Send commands</button>
+        <br>
+    </div>
+    <div style="float: left">
+        <h3>Scanner responses</h3>
+        <textarea readonly id="output"
+                  style="height: 356px; width: 546px; border: 1px solid black"></textarea>
+        <br>
+        <button id="clear" type="button" onclick="clearResponses()">Clear responses</button>
+        <p>Errors seen: <span id="error_count">0</span></p>
+    </div>
+</div>
+
+<script>
+    // Function to program Bank 10 with PDX frequencies
+    async function programBank10() {
+        const output = document.getElementById('output');
+        output.value = ''; // Clear previous output
+
+        const frequencies = [
+            { freq: '118.700', description: 'Portland Tower' },
+            { freq: '118.100', description: 'Portland Approach' },
+            { freq: '118.100', description: 'Portland Departure' },
+            { freq: '121.900', description: 'Ground Control' },
+            { freq: '120.125', description: 'Clearance Delivery' },
+            { freq: '128.350', description: 'ATIS' },
+            { freq: '126.900', description: 'Final Approach' },
+            { freq: '284.600', description: 'South Approach/Departure' },
+            { freq: '299.200', description: 'North Approach/Departure' },
+            { freq: '294.700', description: 'Departure Radar Control' },
+            { freq: '127.850', description: 'Alternate Departure' },
+            { freq: '290.300', description: 'Alternate Departure' },
+            { freq: '122.600', description: 'Flight Service Station' }
+        ];
+
+        let device;
+
+        try {
+            // Opening the WebUSB connection
+            const device = await navigator.usb.requestDevice({ filters: [] });
+            output.value += 'Opening connection to scanner...\n';
+            await device.open();
+            await device.selectConfiguration(1);
+
+            // Select the appropriate interface (we're assuming interface 0 here)
+            await device.claimInterface(0);
+            output.value += 'Connection established and interface claimed.\n';
+
+            // Iterate over interfaces and endpoints to find the correct one
+            const interfaces = device.configuration.interfaces;
+            let endpointToUse = null;
+
+            for (const iface of interfaces) {
+                const endpoints = iface.alternate.endpoints;
+                for (const endpoint of endpoints) {
+                    if (endpoint.direction === 'out') {
+                        endpointToUse = endpoint;
+                        break;
+                    }
+                }
+                if (endpointToUse) break;
+            }
+
+            if (!endpointToUse) {
+                throw new Error('No valid endpoint found for sending data.');
+            }
+
+            // Loop through each frequency and program it into Bank 10
+            for (let i = 0; i < frequencies.length; i++) {
+                const freq = frequencies[i].freq;
+                const description = frequencies[i].description;
+                const command = `BANK10 ${i + 1} ${freq} ${description}`;
+                output.value += `Sending: ${command}\n`;
+                await sendCommand(device, command, endpointToUse);
+            }
+
+            output.value += 'Bank 10 programming complete.\n';
+        } catch (error) {
+            output.value = 'Error: ' + error.message;
+        } finally {
+            // Closing the connection
+            output.value += 'Closing connection...\n';
+            try {
+                if (device) {
+                    await device.close();
+                    output.value += 'Connection closed.\n';
+                }
+            } catch (closeError) {
+                output.value += 'Error closing connection: ' + closeError.message + '\n';
+            }
+        }
+    }
+
+    // Function to send a command to the scanner via WebUSB
+    async function sendCommand(device, command, endpoint) {
+        const output = document.getElementById('output');
+        try {
+            // Sending data through the identified endpoint
+            const encoder = new TextEncoder();
+            const commandBuffer = encoder.encode(command);
+
+            await device.transferOut(endpoint.endpointNumber, commandBuffer); // Send the command to the scanner
+            output.value += `Command sent: ${command}\n`;
+        } catch (error) {
+            output.value += `Error sending command: ${error.message}\n`;
+        }
+    }
+
+    // Function to clear the output
+    function clearResponses() {
+        const output = document.getElementById('output');
+        output.value = '';
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,3 @@
+[submodule "bc125at-tool"]
+	path = bc125at-tool
+	url = https://github.com/costamesatechsolutions/bc125at-tool.git
