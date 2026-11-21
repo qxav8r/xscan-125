@@ -4,7 +4,9 @@
 stack (HyperXTalk, OpenXTalk, LiveCode) that puts a point-and-click front end on
 [bc125at-tool](https://github.com/costamesatechsolutions/bc125at-tool).
 
-> Status: prototype, private. Not ready for general use yet.
+> **Status: early preview (v0.1).** Scanner Info, Read Banks, Export/Import and
+> Settings work; Load Presets and Manage Banks are still to come. Feedback welcome
+> via Issues.
 
 > **xScan-125 is a stack, not a standalone app.** You open it in a free xTalk
 > development app (an "IDE") — see [Requirements](#requirements).
