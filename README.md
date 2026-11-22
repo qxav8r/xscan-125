@@ -26,7 +26,7 @@ stack (HyperXTalk, OpenXTalk, LiveCode) that puts a point-and-click front end on
 Editing channels: **Export → edit the CSV in Numbers or Excel → Import.**
 
 ## Requirements
-- macOS (Apple Silicon or Intel)
+- macOS on Apple Silicon (tested). Intel Macs should work but aren't tested yet.
 - **An xTalk IDE to open the stack** — xScan-125 runs inside one of these, it is
   not a double-click app:
   - [HyperXTalk](https://github.com/emily-elizabeth/HyperXTalk) (free, open source,
@@ -49,6 +49,7 @@ Downloads, Documents/GitHub, next to the stack, then a Spotlight search) — no
 setup inside the stack, and nothing machine-specific is saved in it.
 
 ## Repo layout
+- `TODO.md` — what's planned next
 - `xscan-125.v1.hyperxtalk` — the stack
 - `xscan-125_inventory.txt` — text export of every script in the stack
   (written by the stack's option-click inventory tool)
