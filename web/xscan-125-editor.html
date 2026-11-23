@@ -1,0 +1,712 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>xScan-125 Editor</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="xScan Editor">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@400;500;600&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<style>
+:root {
+  --bg:#f3f5f7; --panel:#fff; --ink:#18212b; --muted:#5b6875; --line:#d6dde4;
+  --accent:#0b6e8a; --accent-ink:#fff; --amber:#a8620a; --amber-bg:#fdf1e0;
+  --hero:#0f1e3a; --gold:#f5b841; --chg-bg:rgba(11,110,138,.07);
+  --f-brand:"Fredoka","Arial Rounded MT Bold",system-ui,sans-serif;
+  --f-ui:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,sans-serif;
+  --f-data:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg:#0f151b; --panel:#161e26; --ink:#e3e9ef; --muted:#93a1ae; --line:#2a3540; --hero:#0b1628;
+  --accent:#4fb3cf; --accent-ink:#06222b; --amber:#f0ad4e; --amber-bg:#33260f; --chg-bg:rgba(79,179,207,.09); color-scheme:dark } }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.55 var(--f-body); }
+.wrap { max-width:1000px; margin:0 auto; padding:20px max(16px,env(safe-area-inset-right)) 56px max(16px,env(safe-area-inset-left)); display:grid; gap:18px; }
+.hero { background:var(--hero); color:#fff; border-radius:12px; padding:20px 24px; }
+.hero h1 { font-family:var(--f-brand); font-weight:700; font-size:clamp(2rem,6vw,3rem); line-height:1; margin:0; color:var(--gold); }
+.hero h1 .sub { color:#fff; font-size:.55em; font-weight:600; }
+.hero p { margin:4px 0 0; font-family:var(--f-brand); font-weight:600; font-size:1.1rem; }
+.hero .ver { font:.8rem var(--f-data); color:#c9d6ec; }
+section { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:16px 20px; }
+h2 { font-family:var(--f-brand); font-weight:600; font-size:1.4rem; margin:0 0 8px; color:var(--accent); }
+p { margin:6px 0; max-width:75ch; } ol, ul { margin:6px 0; padding-left:1.4em; max-width:75ch; } li { margin:4px 0; }
+a { color:var(--accent); }
+.btn { display:inline-block; font:600 1rem var(--f-ui); background:var(--accent); color:var(--accent-ink); border-radius:8px; padding:.65rem 1.1rem; text-decoration:none; border:0; cursor:pointer; }
+.btn.ghost { background:transparent; color:var(--accent); border:1px solid var(--accent); }
+.btn:disabled { opacity:.45; pointer-events:none; }
+.btn small { display:block; font-weight:400; font-size:.8rem; opacity:.85; }
+.btns { display:flex; flex-wrap:wrap; gap:10px; margin:10px 0; align-items:center; }
+.msg { min-height:1.4em; color:var(--muted); margin:4px 0 0; }
+.msg.err { color:var(--amber); }
+.tip { border-left:4px solid var(--gold); background:var(--bg); padding:8px 12px; border-radius:0 6px 6px 0; }
+.foot { color:var(--muted); font-size:.85rem; }
+code { font:.85rem var(--f-data); background:var(--bg); border:1px solid var(--line); border-radius:4px; padding:1px 5px; }
+details.fl-opts { border:1px solid var(--line); border-radius:8px; background:var(--panel); padding:0 14px; margin-top:12px; }
+details.fl-opts > summary { cursor:pointer; padding:10px 0; font:600 .95rem var(--f-ui); color:var(--accent); }
+details.fl-opts > summary .fl-os { font-weight:400; color:var(--muted); }
+details.fl-opts[open] > summary { border-bottom:1px solid var(--line); margin-bottom:10px; }
+details.fl-opts .bar { padding-bottom:12px; }
+label.opt { display:flex; align-items:center; gap:8px; font:600 1rem var(--f-ui); margin:6px 0 0; cursor:pointer; }
+label.opt input { width:1.15rem; height:1.15rem; accent-color:var(--accent); }
+.opt-note { margin:2px 0 6px 1.9rem; font-size:.85rem; color:var(--muted); }
+/* bank stack */
+.fl-legs { border:1px solid var(--line); border-radius:8px; background:var(--panel); overflow:hidden; }
+.fl-top { display:flex; flex-wrap:wrap; align-items:center; gap:6px 14px; padding:8px 12px; border-bottom:1px solid var(--line); font:.9rem var(--f-ui); }
+.fl-count { color:var(--muted); }
+.fl-link { background:none; border:0; color:var(--accent); font:600 .85rem var(--f-ui); cursor:pointer; padding:2px 4px; }
+.fl-top .fl-link:first-of-type { margin-left:auto; }
+.fl-empty { padding:12px; color:var(--muted); margin:0; }
+.fl-grp { border-bottom:1px solid var(--line); }
+.fl-grp:last-child { border-bottom:0; }
+.fl-gh { display:flex; align-items:center; gap:8px; padding:6px 12px; background:var(--bg); }
+.fl-gt { flex:1; display:flex; flex-wrap:wrap; align-items:center; gap:2px 12px; text-align:left; background:none; border:0; color:var(--ink); font:.95rem var(--f-ui); cursor:pointer; padding:6px 0; min-width:0; }
+.fl-gt strong { font-size:1rem; }
+.fl-gs { color:var(--muted); }
+.fl-grp:not(.open) > .fl-gb { display:none; }
+.fl-chev { display:inline-block; color:var(--muted); transition:transform .15s; font-size:.8em; }
+.fl-grp.open > .fl-gh .fl-chev { transform:rotate(90deg); }
+.chip { display:inline-block; font:600 .68rem var(--f-ui); letter-spacing:.05em; text-transform:uppercase; padding:1px 6px; border-radius:4px; }
+.chip.chg { background:var(--chg-bg); color:var(--accent); border:1px solid var(--accent); }
+.chip.warn { background:var(--amber-bg); color:var(--amber); }
+.fl-gb { padding:4px 0 8px; }
+.scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+table.ch { border-collapse:collapse; width:100%; min-width:780px; font-size:.92rem; }
+table.ch th { font:600 .68rem var(--f-ui); text-transform:uppercase; letter-spacing:.06em; color:var(--muted); text-align:left; padding:6px 4px; border-bottom:1px solid var(--line); }
+table.ch td { padding:3px 4px; border-bottom:1px solid var(--line); vertical-align:middle; }
+table.ch tr > :first-child { padding-left:12px; }
+table.ch tr > :last-child { padding-right:12px; }
+td.n { font:600 .9rem var(--f-data); color:var(--muted); width:3.2em; }
+table.ch input[type=text], table.ch select { font:.9rem var(--f-data); color:var(--ink); background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:.35rem .45rem; width:100%; }
+table.ch input:focus, table.ch select:focus { outline:2px solid var(--accent); outline-offset:-1px; border-color:var(--accent); }
+td.nm { width:12.5em; } td.fq { width:8em; } td.md { width:6em; } td.tn { width:9.5em; } td.dl { width:4.6em; }
+td.bx { width:2.6em; text-align:center; } td.bx input { width:1.1rem; height:1.1rem; accent-color:var(--accent); }
+td.ac { width:4.6em; white-space:nowrap; text-align:right; }
+.ib { background:none; border:1px solid transparent; color:var(--muted); font:600 1rem var(--f-ui); width:1.9rem; height:1.9rem; border-radius:6px; cursor:pointer; }
+.ib:hover { border-color:var(--line); color:var(--ink); }
+.ib.rv { color:var(--accent); }
+tr.chg td { background:var(--chg-bg); }
+tr.chg td.n { color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }
+tr.clr input[type=text], tr.clr select { opacity:.5; }
+tr.clr td.nm::after { content:"cleared — saved as blank"; display:block; font:600 .68rem var(--f-ui); text-transform:uppercase; letter-spacing:.05em; color:var(--amber); }
+tr.empty:not(.chg) input, tr.empty:not(.chg) select { opacity:.55; }
+input.bad, select.bad { border-color:var(--amber) !important; background:var(--amber-bg) !important; }
+td .why { display:block; font:.75rem var(--f-ui); color:var(--amber); }
+.addrow { padding:6px 12px 0; display:flex; gap:14px; flex-wrap:wrap; align-items:center; }
+.sortbar { padding:2px 12px 6px; font:.85rem var(--f-ui); }
+.dirty { color:var(--accent); font-weight:600; }
+#file { position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <h1>xScan-125 <span class="sub">Editor</span></h1>
+    <p>BC125AT banks &amp; frequencies → CSV for Import Channels</p>
+    <span class="ver">prototype v0.2 · 11/22/26</span>
+  </header>
+
+  <section>
+    <h2>Channel plan</h2>
+    <p>Open a CSV from xScan-125's <strong>Export Channels</strong>, edit it bank by bank, then <strong>Save CSV</strong> and load it with <strong>Import Channels</strong>.</p>
+    <div class="btns">
+      <label class="btn" for="file">Open CSV…</label><input type="file" id="file" accept=".csv,text/csv,text/plain">
+      <button class="btn ghost" id="sample" type="button">Load sample plan</button>
+    </div>
+    <p class="msg" id="msg">No plan open yet.</p>
+    <details class="fl-opts">
+      <summary>Options <span class="fl-os" id="optsum">· programmed channels only</span></summary>
+      <div class="bar">
+        <label class="opt"><input type="checkbox" id="showEmpty"> Show empty slots</label>
+        <p class="opt-note">Lists all 50 slots in every bank so you can fill a specific channel number.</p>
+      </div>
+    </details>
+  </section>
+
+  <div class="fl-legs" id="banks" hidden>
+    <div class="fl-top">
+      <span class="fl-count" id="count"></span>
+      <button class="fl-link" id="expAll" type="button">Expand all</button>
+      <button class="fl-link" id="colAll" type="button">Collapse all</button>
+    </div>
+    <div id="bankList"></div>
+  </div>
+
+  <section id="saveBox" hidden>
+    <h2>Save</h2>
+    <p id="saveSum" class="msg"></p>
+    <div class="btns">
+      <button class="btn" id="save" type="button">Save CSV<small id="fname"></small></button>
+      <button class="btn ghost" id="copy" type="button">Copy CSV</button>
+      <button class="btn ghost" id="revertAll" type="button">Revert all</button>
+    </div>
+    <p class="msg" id="saveMsg"></p>
+  </section>
+
+  <section>
+    <h2>How it works</h2>
+    <ol>
+      <li>In xScan-125, <strong>Export Channels</strong> (that's also your backup).</li>
+      <li>Open that CSV here. Banks start collapsed; tap a bank to edit its channels.</li>
+      <li>To put a bank in order, use <strong>Sort &amp; renumber</strong> at the top of the bank: Name A–Z or Freq low–high. Channels are renumbered from the bank's first slot with no gaps, so the scanner scans them in that order.</li>
+      <li>Edit names, frequencies, mode, tone, delay, lockout (L/O) and priority (Pri). Edited rows are highlighted and counted on the bank header.</li>
+      <li><strong>Save CSV</strong>, then <strong>Import Channels</strong> in xScan-125 and pick the saved file.</li>
+    </ol>
+    <p class="tip">Save writes the whole plan. A channel you clear (×) is saved as a blank row, so Import erases it from the scanner too. Bank on/off isn't part of the CSV; use <strong>Manage Banks</strong> in xScan-125 for that.</p>
+    <p>Names stop at 16 characters. The BC125AT tunes 25–54, 108–174, 225–380 and 400–512 MHz; anything else is flagged in amber. Only one priority channel per bank.</p>
+  </section>
+
+  <p class="foot">Everything runs in your browser: the CSV is never uploaded. The sample plan is the Portland / Columbia River example from the xScan-125 repo. File format: <a href="https://github.com/costamesatechsolutions/bc125at-tool">bc125at-tool</a> by Costa Mesa Tech Solutions.<br>xScan-125 · QXAV8R · <a href="https://github.com/qxav8r/xscan-125">GitHub</a></p>
+</div>
+
+<script type="text/plain" id="sampleCsv">channel,name,frequency,modulation,tone,tone_code,delay,lockout,priority,bank
+1,PDX ATIS,128.35,AM,None,0,2,False,False,1
+2,PDX ClrncDeliv,120.125,AM,None,0,2,False,False,1
+3,PDX Ground 1,121.9,AM,None,0,2,False,False,1
+4,PDX Ground 2,132.275,AM,None,0,2,False,False,1
+5,PDX Twr 10-28,118.7,AM,None,0,2,False,False,1
+6,PDX Twr 03-21,123.775,AM,None,0,2,False,False,1
+7,PDX App/Dep Hi,118.1,AM,None,0,2,False,False,1
+8,PDX App/Dep,124.35,AM,None,0,2,False,False,1
+9,PDX App Final,126.9,AM,None,0,2,False,True,1
+10,PDX Dep Alt,127.85,AM,None,0,2,False,False,1
+11,PDX FSS,122.6,AM,None,0,2,False,False,1
+12,PDX Unicom,122.95,AM,None,0,2,False,False,1
+13,Guard Civ,121.5,AM,None,0,2,False,False,1
+14,Horizon Ops1,131.35,AM,None,0,2,False,False,1
+15,Horizon Ops2,132.0,AM,None,0,2,False,False,1
+16,Alaska Ops,130.5,AM,None,0,2,False,False,1
+17,ARINC SF Radio,131.8,AM,None,0,2,False,False,1
+18,Delta Ops,131.45,AM,None,0,2,False,False,1
+19,United Ops,129.5,AM,None,0,2,False,False,1
+20,ZSE Sec04 Low,124.2,AM,None,0,2,False,False,1
+21,ZSE Sec06 Low,125.8,AM,None,0,2,False,False,1
+22,ZSE Sec05 Low,128.15,AM,None,0,2,False,False,1
+23,ZSE Sec34 Low,119.65,AM,None,0,2,False,False,1
+24,ZSE Sec42 Hi,132.075,AM,None,0,2,False,False,1
+25,ZSE Sec46 Hi,121.35,AM,None,0,2,False,False,1
+26,ZSE Sec16 Hi,135.45,AM,None,0,2,False,False,1
+51,Mar Ch06 Safety,156.3,NFM,None,0,2,False,False,2
+52,Mar Ch09 Boater,156.45,NFM,None,0,2,False,False,2
+53,Mar Ch13 Bridge-,156.65,NFM,None,0,2,False,False,2
+54,Mar Ch16 Distres,156.8,NFM,None,0,2,False,True,2
+55,Mar Ch17 State N,156.85,NFM,None,0,2,False,False,2
+56,Mar Ch22A USCG/B,157.1,NFM,None,0,2,False,False,2
+57,Mar Ch68 Working,156.425,NFM,None,0,2,False,False,2
+58,Mar Ch69 Working,156.475,NFM,None,0,2,False,False,2
+59,Mar Ch71 Working,156.575,NFM,None,0,2,False,False,2
+60,Mar Ch72 Working,156.625,NFM,None,0,2,False,False,2
+61,Mar Ch78A Workin,156.925,NFM,None,0,2,False,False,2
+62,Mar Ch08 Commerc,156.4,NFM,None,0,2,False,False,2
+63,Mar Ch10 Commerc,156.5,NFM,None,0,2,False,False,2
+64,Mar Ch18A Commer,156.9,NFM,None,0,2,False,False,2
+65,Mar Ch67 Tug/Nav,156.375,NFM,None,0,2,False,False,2
+66,Mar Ch73 Intersh,156.675,NFM,None,0,2,False,False,2
+67,Mar Ch79A Commer,156.975,NFM,None,0,2,False,False,2
+68,Mar Ch80A Commer,157.025,NFM,None,0,2,False,False,2
+69,Port Ops Ch1A,156.05,NFM,None,0,2,False,False,2
+70,Port Ops Ch12,156.6,NFM,None,0,2,False,False,2
+71,Port Ops Ch14,156.7,NFM,None,0,2,False,False,2
+101,CB Ch1,26.965,AM,None,0,2,False,False,3
+102,CB Ch2,26.975,AM,None,0,2,False,False,3
+103,CB Ch3,26.985,AM,None,0,2,False,False,3
+104,CB Ch4,27.005,AM,None,0,2,False,False,3
+105,CB Ch5,27.015,AM,None,0,2,False,False,3
+106,CB Ch6,27.025,AM,None,0,2,False,False,3
+107,CB Ch7,27.035,AM,None,0,2,False,False,3
+108,CB Ch8,27.055,AM,None,0,2,False,False,3
+109,CB Ch9 EMERG,27.065,AM,None,0,2,False,True,3
+110,CB Ch10,27.075,AM,None,0,2,False,False,3
+111,CB Ch11,27.085,AM,None,0,2,False,False,3
+112,CB Ch12,27.105,AM,None,0,2,False,False,3
+113,CB Ch13,27.115,AM,None,0,2,False,False,3
+114,CB Ch14,27.125,AM,None,0,2,False,False,3
+115,CB Ch15,27.135,AM,None,0,2,False,False,3
+116,CB Ch16,27.155,AM,None,0,2,False,False,3
+117,CB Ch17,27.165,AM,None,0,2,False,False,3
+118,CB Ch18,27.175,AM,None,0,2,False,False,3
+119,CB Ch19 TRUCKER,27.185,AM,None,0,2,False,False,3
+120,CB Ch20,27.205,AM,None,0,2,False,False,3
+121,CB Ch21,27.215,AM,None,0,2,False,False,3
+122,CB Ch22,27.225,AM,None,0,2,False,False,3
+123,CB Ch23,27.235,AM,None,0,2,False,False,3
+124,CB Ch24,27.245,AM,None,0,2,False,False,3
+125,CB Ch25,27.255,AM,None,0,2,False,False,3
+126,CB Ch26,27.265,AM,None,0,2,False,False,3
+127,CB Ch27,27.275,AM,None,0,2,False,False,3
+128,CB Ch28,27.285,AM,None,0,2,False,False,3
+129,CB Ch29,27.295,AM,None,0,2,False,False,3
+130,CB Ch30,27.305,AM,None,0,2,False,False,3
+131,CB Ch31,27.315,AM,None,0,2,False,False,3
+132,CB Ch32,27.325,AM,None,0,2,False,False,3
+133,CB Ch33,27.335,AM,None,0,2,False,False,3
+134,CB Ch34,27.345,AM,None,0,2,False,False,3
+135,CB Ch35,27.355,AM,None,0,2,False,False,3
+136,CB Ch36,27.365,AM,None,0,2,False,False,3
+137,CB Ch37,27.375,AM,None,0,2,False,False,3
+138,CB Ch38 LSB,27.385,AM,None,0,2,False,False,3
+139,CB Ch39,27.395,AM,None,0,2,False,False,3
+140,CB Ch40,27.405,AM,None,0,2,False,False,3
+151,Mult Search Resc,155.805,NFM,None,0,2,False,False,4
+152,Mult Emergency M,158.73,NFM,CTCSS 103.5 Hz,77,2,False,False,4
+153,Clark Co Fire Di,154.07,NFM,None,0,2,False,False,4
+154,Clark Co Fire Co,155.655,NFM,None,0,2,False,False,4
+155,Fire Disp 10 (un,153.95,NFM,CTCSS 127.3 Hz,83,2,False,False,4
+201,Clark Co Sheriff,155.07,NFM,None,0,2,False,False,5
+202,WSP Car 1 (State,155.445,NFM,None,0,2,False,False,5
+203,WSP Car 2 (State,155.46,NFM,None,0,2,False,False,5
+204,WSP State Common,155.97,NFM,None,0,2,False,False,5
+205,WSP Tactical,154.77,NFM,None,0,2,False,False,5
+206,WSP D5 Car3 Clar,154.755,NFM,CTCSS 136.5 Hz,85,2,False,False,5
+207,WSP MARS Interop,155.19,NFM,None,0,2,False,False,5
+208,OSP PP1 Portland,154.935,NFM,CTCSS 179.9 Hz,97,2,False,False,5
+209,OSP St Helens,154.905,NFM,CTCSS 179.9 Hz,97,2,False,False,5
+210,OSP Tac1 Repeate,156.03,NFM,CTCSS 156.7 Hz,89,2,False,False,5
+211,OSP Tac2 Direct,156.03,NFM,CTCSS 156.7 Hz,89,2,False,False,5
+212,OSP OPEN Mutual,155.475,NFM,None,0,2,False,False,5
+251,NOAA WX1,162.55,NFM,None,0,2,False,False,6
+252,NOAA WX2,162.4,NFM,None,0,2,False,False,6
+253,NOAA WX3,162.475,NFM,None,0,2,False,False,6
+254,NOAA WX4,162.425,NFM,None,0,2,False,False,6
+255,NOAA WX5,162.45,NFM,None,0,2,False,False,6
+256,NOAA WX6,162.525,NFM,None,0,2,False,False,6
+257,NOAA WX7,162.5,NFM,None,0,2,False,False,6
+301,BNSF Fallbridge,161.25,NFM,None,0,2,False,False,7
+302,BNSF Fallbridge,161.415,NFM,None,0,2,False,False,7
+303,BNSF Willbridge,160.65,NFM,None,0,2,False,False,7
+304,UP Portland-Arli,160.515,NFM,None,0,2,False,False,7
+305,UP Albina Yard,160.68,NFM,None,0,2,False,False,7
+306,PTRC Operations,161.49,NFM,None,0,2,False,False,7
+307,PTRC Switching,161.07,NFM,None,0,2,False,False,7
+308,PTRC Intermodal,161.295,NFM,None,0,2,False,False,7
+309,Amtrak PDX Yard,161.04,NFM,None,0,2,False,False,7
+310,Amtrak PDX Stati,160.35,NFM,None,0,2,False,False,7
+311,WES Yard Ops,160.2975,NFM,None,0,2,False,False,7
+312,WES Conductors,160.845,NFM,None,0,2,False,False,7
+313,WES Track Warran,161.385,NFM,None,0,2,False,False,7
+314,BNSF Seattle-Tuk,161.16,NFM,None,0,2,False,False,7
+315,BNSF Tukwila-Ten,161.415,NFM,None,0,2,False,False,7
+316,BNSF Tenino-NVan,161.1,NFM,None,0,2,False,False,7
+317,BNSF NVanJct-Van,161.25,NFM,None,0,2,False,False,7
+318,BNSF Balmer Yard,160.65,NFM,None,0,2,False,False,7
+319,BNSF Balmer Yard,161.31,NFM,None,0,2,False,False,7
+320,BNSF Stacy Yard,161.01,NFM,None,0,2,False,False,7
+321,UP Portland-Seat,160.515,NFM,None,0,2,False,False,7
+322,UP Fife Yard,160.23,NFM,None,0,2,False,False,7
+323,BNSF Scenic Seat,161.16,NFM,None,0,2,False,False,7
+324,BNSF Scenic MP18,161.25,NFM,None,0,2,False,False,7
+325,BNSF Scenic Lowe,161.1,NFM,None,0,2,False,False,7
+326,BNSF Scenic MOW,160.92,NFM,None,0,2,False,False,7
+327,BNSF ColumbiaRiv,161.1,NFM,None,0,2,False,False,7
+328,BNSF Wenatchee Y,161.16,NFM,None,0,2,False,False,7
+329,BNSF Lakeside Su,161.25,NFM,None,0,2,False,False,7
+330,BNSF Lakeside Ma,161.16,NFM,None,0,2,False,False,7
+331,BNSF Lakeside Pa,161.445,NFM,None,0,2,False,False,7
+332,RR AAR17 Splinte,160.835,NFM,None,0,2,False,False,7
+333,RR AAR19 Splinte,160.565,NFM,None,0,2,False,False,7
+334,RR AAR20 Splinte,160.595,NFM,None,0,2,False,False,7
+335,RR Yard AAR64,160.55,NFM,None,0,2,False,False,7
+336,RR Defect Detect,161.57,NFM,None,0,2,False,False,7
+337,RR EOT Telemetry,161.55,NFM,None,0,2,False,False,7
+351,AAR Ch07,160.215,NFM,None,0,2,False,False,8
+352,AAR Ch08,160.23,NFM,None,0,2,False,False,8
+353,AAR Ch09,160.245,NFM,None,0,2,False,False,8
+354,AAR Ch10,160.26,NFM,None,0,2,False,False,8
+355,AAR Ch11,160.275,NFM,None,0,2,False,False,8
+356,AAR Ch12,160.29,NFM,None,0,2,False,False,8
+357,AAR Ch13,160.305,NFM,None,0,2,False,False,8
+358,AAR Ch14,160.32,NFM,None,0,2,False,False,8
+359,AAR Ch15,160.335,NFM,None,0,2,False,False,8
+360,AAR Ch16,160.35,NFM,None,0,2,False,False,8
+361,AAR Ch17,160.365,NFM,None,0,2,False,False,8
+362,AAR Ch18,160.38,NFM,None,0,2,False,False,8
+363,AAR Ch19,160.395,NFM,None,0,2,False,False,8
+364,AAR Ch20,160.41,NFM,None,0,2,False,False,8
+365,AAR Ch21,160.425,NFM,None,0,2,False,False,8
+366,AAR Ch22,160.44,NFM,None,0,2,False,False,8
+367,AAR Ch23,160.455,NFM,None,0,2,False,False,8
+368,AAR Ch24,160.47,NFM,None,0,2,False,False,8
+369,AAR Ch25,160.485,NFM,None,0,2,False,False,8
+370,AAR Ch26,160.5,NFM,None,0,2,False,False,8
+371,AAR Ch27,160.515,NFM,None,0,2,False,False,8
+372,AAR Ch28,160.53,NFM,None,0,2,False,False,8
+373,AAR Ch29,160.545,NFM,None,0,2,False,False,8
+374,AAR Ch30,160.56,NFM,None,0,2,False,False,8
+375,AAR Ch31,160.575,NFM,None,0,2,False,False,8
+376,AAR Ch32,160.59,NFM,None,0,2,False,False,8
+377,AAR Ch33,160.605,NFM,None,0,2,False,False,8
+378,AAR Ch34,160.62,NFM,None,0,2,False,False,8
+379,AAR Ch35,160.635,NFM,None,0,2,False,False,8
+380,AAR Ch36,160.65,NFM,None,0,2,False,False,8
+381,AAR Ch37,160.665,NFM,None,0,2,False,False,8
+382,AAR Ch38,160.68,NFM,None,0,2,False,False,8
+383,AAR Ch39,160.695,NFM,None,0,2,False,False,8
+384,AAR Ch40,160.71,NFM,None,0,2,False,False,8
+385,AAR Ch41,160.725,NFM,None,0,2,False,False,8
+386,AAR Ch42,160.74,NFM,None,0,2,False,False,8
+387,AAR Ch43,160.755,NFM,None,0,2,False,False,8
+388,AAR Ch44,160.77,NFM,None,0,2,False,False,8
+389,AAR Ch45,160.785,NFM,None,0,2,False,False,8
+390,AAR Ch46,160.8,NFM,None,0,2,False,False,8
+391,AAR Ch47,160.815,NFM,None,0,2,False,False,8
+392,AAR Ch48,160.83,NFM,None,0,2,False,False,8
+393,AAR Ch49,160.845,NFM,None,0,2,False,False,8
+394,AAR Ch50,160.86,NFM,None,0,2,False,False,8
+395,AAR Ch51,160.875,NFM,None,0,2,False,False,8
+396,AAR Ch52,160.89,NFM,None,0,2,False,False,8
+397,AAR Ch53,160.905,NFM,None,0,2,False,False,8
+398,AAR Ch54,160.92,NFM,None,0,2,False,False,8
+399,AAR Ch55,160.935,NFM,None,0,2,False,False,8
+400,AAR Ch56,160.95,NFM,None,0,2,False,False,8
+401,AAR Ch57,160.965,NFM,None,0,2,False,False,9
+402,AAR Ch58,160.98,NFM,None,0,2,False,False,9
+403,AAR Ch59,160.995,NFM,None,0,2,False,False,9
+404,AAR Ch60,161.01,NFM,None,0,2,False,False,9
+405,AAR Ch61,161.025,NFM,None,0,2,False,False,9
+406,AAR Ch62,161.04,NFM,None,0,2,False,False,9
+407,AAR Ch63,161.055,NFM,None,0,2,False,False,9
+408,AAR Ch64,161.07,NFM,None,0,2,False,False,9
+409,AAR Ch65,161.085,NFM,None,0,2,False,False,9
+410,AAR Ch66,161.1,NFM,None,0,2,False,False,9
+411,AAR Ch67,161.115,NFM,None,0,2,False,False,9
+412,AAR Ch68,161.13,NFM,None,0,2,False,False,9
+413,AAR Ch69,161.145,NFM,None,0,2,False,False,9
+414,AAR Ch70,161.16,NFM,None,0,2,False,False,9
+415,AAR Ch71,161.175,NFM,None,0,2,False,False,9
+416,AAR Ch72,161.19,NFM,None,0,2,False,False,9
+417,AAR Ch73,161.205,NFM,None,0,2,False,False,9
+418,AAR Ch74,161.22,NFM,None,0,2,False,False,9
+419,AAR Ch75,161.235,NFM,None,0,2,False,False,9
+420,AAR Ch76,161.25,NFM,None,0,2,False,False,9
+421,AAR Ch77,161.265,NFM,None,0,2,False,False,9
+422,AAR Ch78,161.28,NFM,None,0,2,False,False,9
+423,AAR Ch79,161.295,NFM,None,0,2,False,False,9
+424,AAR Ch80,161.31,NFM,None,0,2,False,False,9
+425,AAR Ch81,161.325,NFM,None,0,2,False,False,9
+426,AAR Ch82,161.34,NFM,None,0,2,False,False,9
+427,AAR Ch83,161.355,NFM,None,0,2,False,False,9
+428,AAR Ch84,161.37,NFM,None,0,2,False,False,9
+429,AAR Ch85,161.385,NFM,None,0,2,False,False,9
+430,AAR Ch86,161.4,NFM,None,0,2,False,False,9
+431,AAR Ch87,161.415,NFM,None,0,2,False,False,9
+432,AAR Ch88,161.43,NFM,None,0,2,False,False,9
+433,AAR Ch89,161.445,NFM,None,0,2,False,False,9
+434,AAR Ch90,161.46,NFM,None,0,2,False,False,9
+435,AAR Ch91,161.475,NFM,None,0,2,False,False,9
+436,AAR Ch92,161.49,NFM,None,0,2,False,False,9
+437,AAR Ch93,161.505,NFM,None,0,2,False,False,9
+438,AAR Ch94,161.52,NFM,None,0,2,False,False,9
+439,AAR Ch95,161.535,NFM,None,0,2,False,False,9
+440,AAR Ch96,161.55,NFM,None,0,2,False,False,9
+441,AAR Ch97,161.565,NFM,None,0,2,False,False,9
+451,Unknown UHF,451.0375,NFM,None,0,2,False,False,0
+452,Horizon QX Ramp,460.675,FM,None,0,2,False,False,0
+453,Horizon QX Mtx (,461.8875,FM,None,0,2,False,False,0
+454,Camas/Larch Mtn,146.84,FM,None,0,2,False,False,0</script>
+<script>
+{
+const $ = id => document.getElementById(id);
+const CTCSS = {64:67.0,65:69.3,66:71.9,67:74.4,68:77.0,69:79.7,70:82.5,71:85.4,72:88.5,73:91.5,74:94.8,75:97.4,76:100.0,77:103.5,78:107.2,79:110.9,80:114.8,81:118.8,82:123.0,83:127.3,84:131.8,85:136.5,86:141.3,87:146.2,88:151.4,89:156.7,90:159.8,91:162.2,92:165.5,93:167.9,94:171.3,95:173.8,96:177.3,97:179.9,98:183.5,99:186.2,100:189.9,101:192.8,102:196.6,103:199.5,104:203.5,105:206.5,106:210.7,107:218.1,108:225.7,109:229.1,110:233.6,111:241.8,112:250.3,113:254.1};
+const DCSL = [23,25,26,31,32,36,43,47,51,53,54,65,71,72,73,74,114,115,116,122,125,131,132,134,143,145,152,155,156,162,165,172,174,205,212,223,225,226,243,244,245,246,251,252,255,261,263,265,266,271,274,306,311,315,325,331,332,343,346,351,356,364,365,371,411,412,413,423,431,432,445,446,452,454,455,462,464,465,466,503,506,516,523,526,532,546,565,606,612,624,627,631,632,654,662,664,703,712,723,731,732,734,743,754];
+const DCS = {}; DCSL.forEach((d, i) => DCS[128 + i] = d);
+const MODES = ['AUTO','AM','FM','NFM'], DELAYS = [-10,-5,0,1,2,3,4,5];
+const RANGES = [[25,54],[108,174],[225,380],[400,512]];
+const BANK_ORDER = [1,2,3,4,5,6,7,8,9,0];
+
+const toneStr = c => { c = +c;
+  if (c === 0) return 'None'; if (c === 127) return 'Search'; if (c === 240) return 'No Tone';
+  if (CTCSS[c] != null) return 'CTCSS ' + CTCSS[c].toFixed(1) + ' Hz';
+  if (DCS[c] != null) return 'DCS ' + String(DCS[c]).padStart(3, '0');
+  return 'None'; };
+const toneCode = s => { s = String(s || '').trim().toLowerCase();
+  if (!s || s === 'none' || s === 'off' || s === '0') return 0;
+  if (s === 'search') return 127; if (s === 'no tone' || s === 'notone') return 240;
+  if (/dcs/.test(s)) { const d = parseInt(s.replace(/\D/g, ''), 10); for (const k in DCS) if (DCS[k] === d) return +k; return 0; }
+  const f = parseFloat(s.replace(/[^\d.]/g, '')); for (const k in CTCSS) if (CTCSS[k] === f) return +k; return 0; };
+let TONE_OPTS = '<option value="0">None</option><option value="127">Search</option><option value="240">No Tone</option><optgroup label="CTCSS">';
+for (const k in CTCSS) TONE_OPTS += `<option value="${k}">${CTCSS[k].toFixed(1)} Hz</option>`;
+TONE_OPTS += '</optgroup><optgroup label="DCS">';
+for (const k in DCS) TONE_OPTS += `<option value="${k}">DCS ${String(DCS[k]).padStart(3, '0')}</option>`;
+TONE_OPTS += '</optgroup>';
+const MODE_OPTS = MODES.map(m => `<option>${m}</option>`).join('');
+const DELAY_OPTS = DELAYS.map(d => `<option value="${d}">${d}s</option>`).join('');
+
+const bankOf = ch => Math.floor((ch - 1) / 50 + 1) % 10;
+const firstCh = b => (b === 0 ? 9 : b - 1) * 50 + 1;
+const blank = () => ({ name:'', freq:'', mod:'AUTO', tone:0, delay:2, lo:false, pri:false });
+const isEmpty = c => !String(c.freq).trim();
+const esc = s => String(s).replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+
+let orig = [], cur = [], shown = new Set(), fileStem = 'channels', dirty = false;
+
+function parseCSV(text) {
+  const rows = []; let row = [], f = '', q = false;
+  text = text.replace(/^﻿/, '');
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) { if (c === '"') { if (text[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += c; }
+    else if (c === '"') q = true;
+    else if (c === ',') { row.push(f); f = ''; }
+    else if (c === '\n' || c === '\r') { if (c === '\r' && text[i + 1] === '\n') i++; row.push(f); rows.push(row); row = []; f = ''; }
+    else f += c;
+  }
+  if (f || row.length) { row.push(f); rows.push(row); }
+  return rows.filter(r => r.some(v => v.trim()));
+}
+const truthy = v => /^(true|1|yes|y|on)$/i.test(String(v).trim());
+
+function load(text, name) {
+  const rows = parseCSV(text);
+  if (rows.length < 2) return msg('That file has no channel rows.', true);
+  const h = rows[0].map(s => s.trim().toLowerCase());
+  const col = (...k) => { for (const n of k) { const i = h.indexOf(n); if (i >= 0) return i; } return -1; };
+  const iC = col('channel','index','slot'), iN = col('name','alpha_tag','tag'), iF = col('frequency','freq','mhz'),
+        iM = col('modulation','mode','mod'), iT = col('tone','ctcss_dcs'), iTC = col('tone_code'),
+        iD = col('delay'), iL = col('lockout'), iP = col('priority','pri');
+  if (iC < 0 || iF < 0) return msg('Not a bc125at-tool channel CSV (needs "channel" and "frequency" columns).', true);
+  orig = Array.from({ length: 501 }, blank);
+  let n = 0, skipped = 0;
+  for (const r of rows.slice(1)) {
+    const ch = parseInt(r[iC], 10);
+    if (!(ch >= 1 && ch <= 500)) { skipped++; continue; }
+    const fq = (r[iF] || '').trim(), fv = parseFloat(fq);
+    const c = blank();
+    if (fq && fv > 0 && !/^none$/i.test(fq)) {
+      c.freq = String(fv); c.name = (r[iN] || '').slice(0, 16);
+      const m = (r[iM] || '').trim().toUpperCase(); c.mod = MODES.includes(m) ? m : 'AUTO';
+      const tc = iTC >= 0 && r[iTC] !== '' && r[iTC] != null ? parseInt(r[iTC], 10) : NaN;
+      c.tone = !isNaN(tc) && (tc === 0 || tc === 127 || tc === 240 || CTCSS[tc] != null || DCS[tc] != null) ? tc : toneCode(iT >= 0 ? r[iT] : '');
+      const d = parseInt(r[iD], 10); c.delay = DELAYS.includes(d) ? d : 2;
+      c.lo = iL >= 0 && truthy(r[iL]); c.pri = iP >= 0 && truthy(r[iP]);
+      n++;
+    }
+    orig[ch] = c;
+  }
+  cur = orig.map(c => ({ ...c }));
+  shown = new Set(); dirty = false;
+  fileStem = (name || 'channels').replace(/\.[^.]+$/, '').replace(/_edited_\d{4}-\d{2}-\d{2}$/, '');
+  msg(`Opened ${name}: ${n} programmed channels` + (skipped ? ` (${skipped} rows skipped)` : '') + '.');
+  $('banks').hidden = false; $('saveBox').hidden = false;
+  renderBanks();
+}
+
+function same(a, b) {
+  if (isEmpty(a) && isEmpty(b)) return true;
+  if (isEmpty(a) !== isEmpty(b)) return false;
+  return a.name === b.name && Math.abs(parseFloat(a.freq) - parseFloat(b.freq)) < 1e-6 && a.mod === b.mod &&
+    +a.tone === +b.tone && +a.delay === +b.delay && a.lo === b.lo && a.pri === b.pri;
+}
+function freqErr(c) {
+  if (isEmpty(c)) return c.name.trim() ? 'No frequency: saves as blank' : '';
+  const v = parseFloat(c.freq);
+  if (!/^\s*\d+(\.\d+)?\s*$/.test(c.freq) || isNaN(v)) return 'Not a number';
+  if (!RANGES.some(([lo, hi]) => v >= lo && v <= hi)) return 'Outside BC125AT range';
+  return '';
+}
+function bankChans(b) { const s = firstCh(b); return Array.from({ length: 50 }, (_, i) => s + i); }
+function priCount(b) { return bankChans(b).filter(ch => !isEmpty(cur[ch]) && cur[ch].pri).length; }
+function visible(ch) { return $('showEmpty').checked || !isEmpty(cur[ch]) || !isEmpty(orig[ch]) || shown.has(ch); }
+
+function bankStats(b) {
+  let prog = 0, chg = 0, warn = 0;
+  for (const ch of bankChans(b)) {
+    if (!isEmpty(cur[ch])) prog++;
+    if (!same(cur[ch], orig[ch])) chg++;
+    if (freqErr(cur[ch])) warn++;
+  }
+  if (priCount(b) > 1) warn++;
+  return { prog, chg, warn };
+}
+function headHTML(b) {
+  const s = bankStats(b), a = firstCh(b);
+  return `<span class="fl-chev">▶</span><strong>Bank ${b}</strong><span class="fl-gs">Ch ${a}–${a + 49} · ${s.prog} programmed</span>` +
+    (s.chg ? `<span class="chip chg">${s.chg} changed</span>` : '') +
+    (s.warn ? `<span class="chip warn">${s.warn} to check</span>` : '');
+}
+
+function renderBanks() {
+  const open = new Set([...document.querySelectorAll('.fl-grp.open')].map(g => +g.dataset.b));
+  $('bankList').innerHTML = BANK_ORDER.map(b =>
+    `<div class="fl-grp${open.has(b) ? ' open' : ''}" data-b="${b}"><div class="fl-gh"><button class="fl-gt" type="button">${headHTML(b)}</button></div><div class="fl-gb"></div></div>`).join('');
+  open.forEach(b => renderBody(b));
+  updateTotals();
+}
+function rowHTML(ch) {
+  const c = cur[ch];
+  return `<tr data-ch="${ch}">
+  <td class="n">${ch}</td>
+  <td class="nm"><input type="text" data-k="name" maxlength="16" value="${esc(c.name)}" placeholder="—" autocomplete="off" spellcheck="false"></td>
+  <td class="fq"><input type="text" data-k="freq" inputmode="decimal" value="${esc(c.freq)}" placeholder="MHz" autocomplete="off"><span class="why"></span></td>
+  <td class="md"><select data-k="mod">${MODE_OPTS}</select></td>
+  <td class="tn"><select data-k="tone">${TONE_OPTS}</select></td>
+  <td class="dl"><select data-k="delay">${DELAY_OPTS}</select></td>
+  <td class="bx"><input type="checkbox" data-k="lo" aria-label="Lockout"></td>
+  <td class="bx"><input type="checkbox" data-k="pri" aria-label="Priority"></td>
+  <td class="ac"><button class="ib rv" type="button" data-a="rv" title="Revert this channel">↺</button><button class="ib" type="button" data-a="clr" title="Clear this channel">×</button></td></tr>`;
+}
+function renderBody(b) {
+  const g = document.querySelector(`.fl-grp[data-b="${b}"]`), body = g.querySelector('.fl-gb');
+  const chans = bankChans(b).filter(visible);
+  const free = bankChans(b).some(ch => !visible(ch));
+  const nProg = bankChans(b).filter(ch => !isEmpty(cur[ch])).length;
+  body.innerHTML = (nProg > 1 ? `<div class="addrow sortbar"><span class="fl-gs">Sort &amp; renumber:</span><button class="fl-link" type="button" data-a="sort" data-key="name">Name A–Z</button><button class="fl-link" type="button" data-a="sort" data-key="freq">Freq low–high</button></div>` : '') +
+    (chans.length
+    ? `<div class="scroll"><table class="ch"><thead><tr><th>Ch</th><th>Name</th><th>Freq MHz</th><th>Mode</th><th>Tone</th><th>Delay</th><th>L/O</th><th>Pri</th><th></th></tr></thead><tbody>${chans.map(rowHTML).join('')}</tbody></table></div>`
+    : '<p class="fl-empty">No channels in this bank.</p>') +
+    (free ? '<div class="addrow"><button class="fl-link" type="button" data-a="add">+ Add channel</button></div>' : '');
+  body.querySelectorAll('tr[data-ch]').forEach(syncRow);
+}
+function sortBank(b, key) {
+  const slots = bankChans(b), list = slots.filter(ch => !isEmpty(cur[ch])).map(ch => cur[ch]);
+  const fv = c => freqErr(c) ? Infinity : parseFloat(c.freq);
+  const byName = (x, y) => x.name.localeCompare(y.name, undefined, { numeric: true, sensitivity: 'base' });
+  list.sort(key === 'name' ? (x, y) => byName(x, y) || fv(x) - fv(y) : (x, y) => fv(x) - fv(y) || byName(x, y));
+  slots.forEach((ch, i) => { cur[ch] = list[i] ? { ...list[i] } : blank(); shown.delete(ch); });
+  dirty = true; renderBody(b); refreshBank(b);
+  const moved = slots.filter(ch => !same(cur[ch], orig[ch])).length;
+  saveMsg(`Bank ${b} sorted by ${key === 'name' ? 'name' : 'frequency'} and renumbered from Ch ${slots[0]}: ${moved} channel${moved === 1 ? '' : 's'} changed. Use ↺ on a row or Revert all to undo.`);
+}
+function syncRow(tr) {
+  const ch = +tr.dataset.ch, c = cur[ch];
+  tr.querySelector('[data-k=mod]').value = c.mod;
+  tr.querySelector('[data-k=tone]').value = String(c.tone);
+  tr.querySelector('[data-k=delay]').value = String(c.delay);
+  tr.querySelector('[data-k=lo]').checked = c.lo;
+  tr.querySelector('[data-k=pri]').checked = c.pri;
+  paintRow(tr);
+}
+function paintRow(tr) {
+  const ch = +tr.dataset.ch, c = cur[ch], b = bankOf(ch);
+  const changed = !same(c, orig[ch]);
+  tr.classList.toggle('chg', changed);
+  tr.classList.toggle('clr', isEmpty(c) && !isEmpty(orig[ch]));
+  tr.classList.toggle('empty', isEmpty(c));
+  tr.querySelector('[data-a=rv]').style.visibility = changed ? 'visible' : 'hidden';
+  tr.querySelector('[data-a=clr]').style.visibility = isEmpty(c) && !c.name ? 'hidden' : 'visible';
+  const e = freqErr(c), fi = tr.querySelector('[data-k=freq]');
+  fi.classList.toggle('bad', !!e && !(isEmpty(c) && !isEmpty(orig[ch])));
+  tr.querySelector('.why').textContent = isEmpty(c) && !isEmpty(orig[ch]) ? '' : e;
+  const pb = !isEmpty(c) && c.pri && priCount(b) > 1;
+  tr.querySelector('[data-k=pri]').closest('td').title = pb ? 'More than one priority channel in this bank' : '';
+  tr.querySelector('[data-k=pri]').classList.toggle('bad', pb);
+  tr.querySelector('[data-k=pri]').style.outline = pb ? '2px solid var(--amber)' : '';
+}
+function refreshBank(b) {
+  const g = document.querySelector(`.fl-grp[data-b="${b}"]`);
+  g.querySelector('.fl-gt').innerHTML = headHTML(b);
+  g.querySelectorAll('tr[data-ch]').forEach(paintRow);
+  updateTotals();
+}
+function updateTotals() {
+  let prog = 0, chg = 0, warn = 0;
+  BANK_ORDER.forEach(b => { const s = bankStats(b); prog += s.prog; chg += s.chg; warn += s.warn; });
+  $('count').innerHTML = `${prog} programmed` + (chg ? ` · <span class="dirty">${chg} changed</span>` : '') + (warn ? ` · ${warn} to check` : '');
+  $('saveSum').innerHTML = (chg ? `<span class="dirty">${chg} channel${chg > 1 ? 's' : ''} changed.</span> ` : 'No changes yet. ') +
+    `Save writes all ${prog} programmed channels` + (clearedCount() ? ` plus ${clearedCount()} cleared as blank rows` : '') + '.' +
+    (warn ? ` <span style="color:var(--amber)">${warn} item${warn > 1 ? 's' : ''} to check (bad frequencies block Save).</span>` : '');
+  $('revertAll').disabled = !chg;
+  $('fname').textContent = filename();
+}
+const clearedCount = () => { let n = 0; for (let ch = 1; ch <= 500; ch++) if (isEmpty(cur[ch]) && !isEmpty(orig[ch])) n++; return n; };
+
+function fmtFreq(f) { let s = parseFloat(f).toFixed(4).replace(/0+$/, ''); if (s.endsWith('.')) s += '0'; return s; }
+const cell = v => /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+const TF = v => v ? 'True' : 'False';
+function buildCSV() {
+  const out = ['channel,name,frequency,modulation,tone,tone_code,delay,lockout,priority,bank'];
+  for (let ch = 1; ch <= 500; ch++) {
+    const c = cur[ch], b = bankOf(ch);
+    if (!isEmpty(c) && !freqErr(c)) out.push([ch, cell(c.name), fmtFreq(c.freq), c.mod, toneStr(c.tone), c.tone, c.delay, TF(c.lo), TF(c.pri), b].join(','));
+    else if (isEmpty(c) && !isEmpty(orig[ch])) out.push([ch, '', '', 'AUTO', 'None', 0, 2, 'False', 'False', b].join(','));
+  }
+  return out.join('\n') + '\n';
+}
+function filename() { const d = new Date(), p = n => String(n).padStart(2, '0');
+  return `${fileStem}_edited_${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}.csv`; }
+function msg(t, err) { $('msg').textContent = t; $('msg').className = 'msg' + (err ? ' err' : ''); }
+function saveMsg(t, err) { $('saveMsg').textContent = t; $('saveMsg').className = 'msg' + (err ? ' err' : ''); }
+function badCount() { let n = 0; for (let ch = 1; ch <= 500; ch++) if (!isEmpty(cur[ch]) && freqErr(cur[ch])) n++; return n; }
+
+// events
+$('file').addEventListener('change', e => {
+  const f = e.target.files[0]; if (!f) return;
+  if (dirty && !window.confirm?.call) {}
+  const r = new FileReader(); r.onload = () => load(r.result, f.name); r.readAsText(f); e.target.value = '';
+});
+$('sample').addEventListener('click', () => load($('sampleCsv').textContent.trim(), 'pdx-columbia-river-2026-11.csv'));
+$('showEmpty').addEventListener('change', () => {
+  $('optsum').textContent = $('showEmpty').checked ? '· all 50 slots per bank' : '· programmed channels only';
+  if (cur.length) renderBanks();
+});
+$('expAll').addEventListener('click', () => document.querySelectorAll('.fl-grp').forEach(g => { if (!g.classList.contains('open')) { g.classList.add('open'); renderBody(+g.dataset.b); } }));
+$('colAll').addEventListener('click', () => document.querySelectorAll('.fl-grp').forEach(g => g.classList.remove('open')));
+
+$('bankList').addEventListener('click', e => {
+  const g = e.target.closest('.fl-grp'); if (!g) return; const b = +g.dataset.b;
+  if (e.target.closest('.fl-gt')) { g.classList.toggle('open'); if (g.classList.contains('open')) renderBody(b); return; }
+  const a = e.target.closest('[data-a]'); if (!a) return;
+  if (a.dataset.a === 'add') {
+    const ch = bankChans(b).find(c => !visible(c)); if (!ch) return;
+    shown.add(ch); renderBody(b); refreshBank(b);
+    g.querySelector(`tr[data-ch="${ch}"] [data-k=name]`).focus(); return;
+  }
+  if (a.dataset.a === 'sort') { sortBank(b, a.dataset.key); return; }
+  const tr = a.closest('tr'), ch = +tr.dataset.ch;
+  if (a.dataset.a === 'rv') cur[ch] = { ...orig[ch] };
+  if (a.dataset.a === 'clr') { cur[ch] = blank(); if (isEmpty(orig[ch]) && !$('showEmpty').checked) shown.delete(ch); }
+  dirty = true;
+  if (!visible(ch)) { renderBody(b); refreshBank(b); return; }
+  tr.querySelector('[data-k=name]').value = cur[ch].name;
+  tr.querySelector('[data-k=freq]').value = cur[ch].freq;
+  syncRow(tr); refreshBank(b);
+});
+function onEdit(e) {
+  const el = e.target, k = el.dataset.k, tr = el.closest('tr[data-ch]'); if (!k || !tr) return;
+  const ch = +tr.dataset.ch, c = cur[ch];
+  if (k === 'name') c.name = el.value.slice(0, 16);
+  else if (k === 'freq') c.freq = el.value.trim();
+  else if (k === 'mod') c.mod = el.value;
+  else if (k === 'tone' || k === 'delay') c[k] = +el.value;
+  else c[k] = el.checked;
+  shown.add(ch); dirty = true;
+  refreshBank(bankOf(ch));
+}
+$('bankList').addEventListener('input', onEdit);
+$('bankList').addEventListener('change', onEdit);
+
+function blockBad() {
+  const bad = badCount(); if (!bad) return false;
+  const first = cur.findIndex((c, ch) => ch > 0 && !isEmpty(c) && freqErr(c)), b = bankOf(first);
+  const g = document.querySelector(`.fl-grp[data-b="${b}"]`);
+  if (!g.classList.contains('open')) { g.classList.add('open'); renderBody(b); }
+  const fi = g.querySelector(`tr[data-ch="${first}"] [data-k=freq]`); if (fi) fi.focus();
+  saveMsg(`Not saved: ${bad} channel${bad > 1 ? 's have' : ' has'} a bad frequency (first is Ch ${first}, Bank ${b}). Fix or revert, then save.`, true);
+  return true;
+}
+$('save').addEventListener('click', () => {
+  if (blockBad()) return;
+  const csv = buildCSV(), bad = 0;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = filename(); document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  dirty = false;
+  saveMsg(`Saved ${filename()}.` + (bad ? ` ${bad} channel${bad > 1 ? 's' : ''} with a bad frequency went out as blank rows; fix and save again to keep them.` : ' Now use Import Channels in xScan-125.'), !!bad);
+});
+$('copy').addEventListener('click', () => {
+  if (blockBad()) return;
+  navigator.clipboard.writeText(buildCSV()).then(() => saveMsg('CSV copied. Paste into a text file and save it as .csv.'), () => saveMsg('Copy was blocked by the browser. Use Save CSV.', true));
+});
+$('revertAll').addEventListener('click', () => {
+  if ($('revertAll').dataset.arm !== '1') { $('revertAll').dataset.arm = '1'; $('revertAll').textContent = 'Tap again to revert';
+    setTimeout(() => { $('revertAll').dataset.arm = ''; $('revertAll').textContent = 'Revert all'; }, 3000); return; }
+  $('revertAll').dataset.arm = ''; $('revertAll').textContent = 'Revert all';
+  cur = orig.map(c => ({ ...c })); shown = new Set(); dirty = false; renderBanks(); saveMsg('All changes reverted.');
+});
+window.addEventListener('beforeunload', e => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+}
+</script>
+</body>
+</html>

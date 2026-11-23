@@ -1,9 +1,9 @@
 ================================================
 xScan-125 Script Inventory — xScan-125
-Generated:   2026-11-21 3:03 PM
+Generated:   2026-11-22 9:05 PM
 Stack name:  xscan-125
 Label:       xScan-125
-File:        ~/Documents/GitHub/xscan-125/xscan-125.v1.hyperxtalk
+File:        ~/Documents/GitHub/xscan-125/xscan-125.v2.hyperxtalk
 Engine:      0.9.15 (development)
 Platform:    MacOS arm64 27.2.1
 Window:      800,780
@@ -956,22 +956,105 @@ end mouseUp
 -- flat look with a heavy outline.)
 
 on formatObjects
-   local tNames, tB, tTop, i
-   put "Initialize,Scanner Info,Read Banks,Import Channels,Export Channels,Load Presets,Manage Banks,Settings,Help" into tNames
-   put 12 into tTop
-   repeat with i = 1 to the number of items of tNames
-      put item i of tNames into tB
-      if there is a button tB of card 1 of this stack then
-         set the style of button tB of card 1 of this stack to "standard"
-         set the threeD of button tB of card 1 of this stack to true
-         set the showBorder of button tB of card 1 of this stack to true
-         set the showFocusBorder of button tB of card 1 of this stack to false
-         set the rect of button tB of card 1 of this stack to 12, tTop, 160, tTop + 28
+   local tCard, tItems, tItem, tB, tF, tTop, tW, tH, tFirst
+   put the long id of card 1 of this stack into tCard
+   put the width of this stack into tW
+   put the height of this stack into tH
+   -- "#" items are section headers; the rest are your button names
+   put "#Scanner,Initialize,Scanner Info,#Channels,Read Banks,Import Channels,Export Channels,Load Presets,Manage Banks,#App,Settings,Help" into tItems
+   set the cSidebarItems of tCard to tItems
+   
+   -- sidebar panel: rearmost round rect, transparent, teal outline, no click hilite
+   if there is a button "sidebar" of tCard then
+      put the long id of button "sidebar" of tCard into tB
+      set the layer of tB to 1
+      set the style of tB to "roundRect"
+      set the showName of tB to false
+      set the opaque of tB to false
+      set the threeD of tB to false
+      set the showBorder of tB to true
+      set the borderWidth of tB to 2
+      set the showFocusBorder of tB to false
+      set the autoHilite of tB to false
+      set the traversalOn of tB to false
+      set the backgroundColor of tB to empty
+      set the hiliteColor of tB to empty
+      set the borderColor of tB to "11,110,138"     -- Floggy teal
+      set the rect of tB to 6, 6, 166, tH - 6
+   end if
+   
+   put 16 into tTop
+   put true into tFirst
+   repeat for each item tItem in tItems
+      if char 1 of tItem is "#" then
+         -- section header label (created once if missing), follows the theme
+         if not tFirst then add 10 to tTop
+         put false into tFirst
+         put "hdr" & char 2 to -1 of tItem into tF
+         if there is not a field tF of tCard then create field tF
+         put the long id of field tF of tCard into tB
+         set the lockText of tB to true
+         set the traversalOn of tB to false
+         set the opaque of tB to false
+         set the showBorder of tB to false
+         set the threeD of tB to false
+         set the dontWrap of tB to true
+         set the textSize of tB to 11
+         set the textStyle of tB to "bold"
+         set the foregroundColor of tB to empty
+         put char 2 to -1 of tItem into field tF of tCard
+         set the rect of tB to 18, tTop, 154, tTop + 18
+         add 22 to tTop
+      else if there is a button tItem of tCard then
+         -- fixed-color round-rect action button: same in light and dark mode
+         put the long id of button tItem of tCard into tB
+         set the style of tB to "roundRect"
+         set the opaque of tB to true
+         set the threeD of tB to false
+         set the showBorder of tB to true
+         set the borderWidth of tB to 2
+         set the showFocusBorder of tB to false
+         set the autoHilite of tB to true
+         set the backgroundColor of tB to "11,110,138"   -- Floggy teal
+         set the borderColor of tB to "8,82,103"         -- darker teal edge
+         set the hiliteColor of tB to "40,150,180"       -- lights up when pressed
+         set the foregroundColor of tB to "255,255,255"  -- white label
+         set the textAlign of tB to "center"
+         set the rect of tB to 18, tTop, 154, tTop + 28
+         add 34 to tTop
       end if
-      add 38 to tTop
    end repeat
-   set the rect of field "Data" of card 1 of this stack to "170,10,790,770"
+   
+   -- log frame: round-rect button behind the Data field, matches the sidebar
+   if there is not a button "dataFrame" of tCard then create button "dataFrame"
+   put the long id of button "dataFrame" of tCard into tB
+   set the layer of tB to 2
+   set the style of tB to "roundRect"
+   set the showName of tB to false
+   set the opaque of tB to false
+   set the threeD of tB to false
+   set the showBorder of tB to true
+   set the borderWidth of tB to 2
+   set the showFocusBorder of tB to false
+   set the autoHilite of tB to false
+   set the traversalOn of tB to false
+   set the backgroundColor of tB to empty
+   set the hiliteColor of tB to empty
+   set the borderColor of tB to "11,110,138"     -- Floggy teal
+   set the rect of tB to 172, 6, tW - 6, tH - 6
+   
+   -- log field: borderless and transparent inside the frame
+   put the long id of field "Data" of tCard into tB
+   set the showBorder of tB to false
+   set the threeD of tB to false
+   set the opaque of tB to false
+   set the dontWrap of tB to false
+   set the hScrollbar of tB to false
+   set the vScrollbar of tB to true
+   set the margins of tB to 10
+   set the rect of tB to 178, 12, tW - 12, tH - 12
 end formatObjects
+
 
 -- ---- Inventory tool (option-click) ---------------------------
 -- Modeled on Floggy's footer inventory (header block, stack,
@@ -1239,7 +1322,11 @@ end tildePath
 -- groups --
 
 -- buttons --
- button Read Banks loc=86,102
+ button sidebar loc=86,390
+ (no script)
+ button dataframe loc=483,390
+ (no script)
+ button Read Banks loc=86,152
  *** HAS SCRIPT ***
 - - - - - - - - - - - - - - - - - - - - - - - -
 on mouseUp
@@ -1247,7 +1334,7 @@ on mouseUp
 end mouseUp
 
 - - - - - - - - - - - - - - - - - - - - - - - -
- button Scanner Info loc=86,64
+ button Scanner Info loc=86,86
  *** HAS SCRIPT ***
 - - - - - - - - - - - - - - - - - - - - - - - -
 on mouseUp
@@ -1280,7 +1367,7 @@ on mouseUp
 end mouseUp
 
 - - - - - - - - - - - - - - - - - - - - - - - -
- button Export Channels loc=86,178
+ button Export Channels loc=86,220
  *** HAS SCRIPT ***
 - - - - - - - - - - - - - - - - - - - - - - - -
 on mouseUp
@@ -1302,7 +1389,7 @@ on mouseUp
 end mouseUp
 
 - - - - - - - - - - - - - - - - - - - - - - - -
- button Import Channels loc=86,140
+ button Import Channels loc=86,186
  *** HAS SCRIPT ***
 - - - - - - - - - - - - - - - - - - - - - - - -
 on mouseUp
@@ -1320,7 +1407,7 @@ on mouseUp
 end mouseUp
 
 - - - - - - - - - - - - - - - - - - - - - - - -
- button Load Presets loc=86,216
+ button Load Presets loc=86,254
  *** HAS SCRIPT ***
 - - - - - - - - - - - - - - - - - - - - - - - -
 on mouseUp
@@ -1329,7 +1416,7 @@ end mouseUp
 
 
 - - - - - - - - - - - - - - - - - - - - - - - -
- button Manage Banks loc=86,254
+ button Manage Banks loc=86,288
  *** HAS SCRIPT ***
 - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -1339,7 +1426,7 @@ on mouseUp
 end mouseUp
 
 - - - - - - - - - - - - - - - - - - - - - - - -
- button Settings loc=86,292
+ button Settings loc=86,354
  *** HAS SCRIPT ***
 - - - - - - - - - - - - - - - - - - - - - - - -
 on mouseUp
@@ -1347,7 +1434,7 @@ on mouseUp
 end mouseUp
 
 - - - - - - - - - - - - - - - - - - - - - - - -
- button Help loc=86,330
+ button Help loc=86,388
  *** HAS SCRIPT ***
 - - - - - - - - - - - - - - - - - - - - - - - -
 on mouseUp
@@ -1362,7 +1449,7 @@ on mouseUp
 end mouseUp
 
 - - - - - - - - - - - - - - - - - - - - - - - -
- button Initialize loc=86,26
+ button Initialize loc=86,52
  *** HAS SCRIPT ***
 - - - - - - - - - - - - - - - - - - - - - - - -
 on mouseUp
@@ -1372,7 +1459,13 @@ end mouseUp
 - - - - - - - - - - - - - - - - - - - - - - - -
 
 -- fields --
- field Data loc=480,390
+ field Data loc=483,390
+ (no script)
+ field hdrScanner loc=86,25
+ (no script)
+ field hdrChannels loc=86,125
+ (no script)
+ field hdrApp loc=86,327
  (no script)
 
 -- other controls --
