@@ -7,7 +7,7 @@ stack (HyperXTalk, OpenXTalk, LiveCode) that puts a point-and-click front end on
 **Website:** [qxav8r.github.io/xscan-125](https://qxav8r.github.io/xscan-125/) · **[Channel Editor](https://qxav8r.github.io/xscan-125/web/xscan-125-editor.html)** (edit banks and
 frequencies in your browser) · [Download](https://github.com/qxav8r/xscan-125/releases/latest) · [Help](https://qxav8r.github.io/xscan-125/docs/help.html)
 
-> **Status: early preview (v0.1).** Scanner Info, Read Banks, Export/Import and
+> **Status: early preview (v0.2).** Scanner Info, Read Banks, Export/Import and
 > Settings work; Load Presets and Manage Banks are still to come. Feedback welcome
 > via Issues.
 
@@ -46,7 +46,7 @@ A spreadsheet (Numbers or Excel) works too: edit, save as CSV, Import.
 2. Install Homebrew, then `brew install libusb`.
 3. Download bc125at-tool into your home folder and run `./setup.sh` in it.
 4. Plug in the scanner (USB) and turn it on.
-5. Open `xscan-125.v1.hyperxtalk` in HyperXTalk (File → Open Stack, or
+5. Open `xscan-125.v2.hyperxtalk` in HyperXTalk (File → Open Stack, or
    drag it onto the app) and click **Initialize**.
 
 xScan-125 finds bc125at-tool on its own every time (home, Documents, Desktop,
@@ -55,7 +55,8 @@ setup inside the stack, and nothing machine-specific is saved in it.
 
 ## Repo layout
 - `TODO.md` — what's planned next
-- `xscan-125.v1.hyperxtalk` — the stack
+- `xscan-125.v2.hyperxtalk` — the stack (sidebar layout)
+- `xscan-125.v1.hyperxtalk` — the previous v0.1 stack, kept for reference
 - `xscan-125_inventory.txt` — text export of every script in the stack
   (written by the stack's option-click inventory tool)
 - `docs/help.html` — the Help page (the stack keeps a copy and opens it)
