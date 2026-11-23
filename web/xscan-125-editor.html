@@ -98,10 +98,15 @@ td .why { display:block; font:.75rem var(--f-ui); color:var(--amber); }
 .sortbar { padding:2px 12px 6px; font:.85rem var(--f-ui); }
 .dirty { color:var(--accent); font-weight:600; }
 #file { position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; }
+.toolnav { display:flex; flex-wrap:wrap; gap:2px 16px; font:600 .95rem var(--f-ui); }
+.toolnav a { color:var(--accent); text-decoration:none; padding:.2rem 0; border-bottom:2px solid transparent; }
+.toolnav a:hover { text-decoration:underline; }
+.toolnav a[aria-current] { color:var(--ink); border-bottom-color:var(--accent); }
 </style>
 </head>
 <body>
 <div class="wrap">
+  <nav class="toolnav" aria-label="xScan-125"><a href="https://qxav8r.github.io/xscan-125/">‹ xScan-125</a><a href="https://qxav8r.github.io/xscan-125/web/xscan-125-editor.html" aria-current="page">Channel Editor</a><a href="https://github.com/qxav8r/xscan-125/releases/latest">Download</a><a href="https://qxav8r.github.io/xscan-125/docs/help.html">Help</a><a href="https://github.com/costamesatechsolutions/bc125at-tool">bc125at-tool ↗</a></nav>
   <header class="hero">
     <h1>xScan-125 <span class="sub">Editor</span></h1>
     <p>BC125AT banks &amp; frequencies → CSV for Import Channels</p>

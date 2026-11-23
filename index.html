@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>xScan-125</title>
+<meta name="description" content="Program a Uniden BC125AT scanner from your Mac: a free xTalk stack front end for bc125at-tool, plus a browser channel editor.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@400;500;600&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<style>
+:root {
+  --bg:#f3f5f7; --panel:#fff; --ink:#18212b; --muted:#5b6875; --line:#d6dde4;
+  --accent:#0b6e8a; --accent-ink:#fff; --hero:#0f1e3a; --gold:#f5b841;
+  --f-brand:"Fredoka","Arial Rounded MT Bold",system-ui,sans-serif;
+  --f-ui:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,sans-serif;
+  --f-data:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg:#0f151b; --panel:#161e26; --ink:#e3e9ef; --muted:#93a1ae; --line:#2a3540; --hero:#0b1628;
+  --accent:#4fb3cf; --accent-ink:#06222b; color-scheme:dark } }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.55 var(--f-body); }
+.wrap { max-width:900px; margin:0 auto; padding:20px max(16px,env(safe-area-inset-right)) 56px max(16px,env(safe-area-inset-left)); display:grid; gap:18px; }
+.hero { background:var(--hero); color:#fff; border-radius:12px; padding:22px 24px; }
+.hero h1 { font-family:var(--f-brand); font-weight:700; font-size:clamp(2.2rem,7vw,3.2rem); line-height:1; margin:0; color:var(--gold); }
+.hero p { margin:6px 0 0; font-family:var(--f-brand); font-weight:600; font-size:1.15rem; }
+.hero .ver { font:.8rem var(--f-data); color:#c9d6ec; }
+section { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:16px 20px; }
+h2 { font-family:var(--f-brand); font-weight:600; font-size:1.4rem; margin:0 0 8px; color:var(--accent); }
+p { margin:6px 0; max-width:75ch; } ol, ul { margin:6px 0; padding-left:1.4em; max-width:75ch; } li { margin:4px 0; }
+a { color:var(--accent); }
+.cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px; }
+.card { display:block; border:1px solid var(--line); border-radius:10px; padding:16px; text-decoration:none; color:var(--ink); background:var(--panel); }
+.card strong { display:block; font:600 1.1rem var(--f-ui); color:var(--accent); }
+.card span { color:var(--muted); font-size:.93rem; }
+.card span.btn { color:var(--accent-ink); font-size:1rem; } .card span.btn.ghost { color:var(--accent); }
+.card .btn { margin-top:12px; }
+.btn { display:inline-block; font:600 1rem var(--f-ui); background:var(--accent); color:var(--accent-ink); border-radius:8px; padding:.6rem 1.1rem; text-decoration:none; }
+.btn.ghost { background:transparent; color:var(--accent); border:1px solid var(--accent); }
+table { border-collapse:collapse; width:100%; font-size:.95rem; }
+th, td { text-align:left; vertical-align:top; padding:8px 10px; border-bottom:1px solid var(--line); }
+td:first-child { font:600 .95rem var(--f-ui); width:30%; }
+@media (max-width:600px) { td { display:block; padding:2px 0; border:0; width:auto !important; } tr { display:block; padding:8px 0; border-bottom:1px solid var(--line); } td:first-child { padding-top:6px; } }
+.soon { color:var(--muted); font-style:italic; }
+.tip { border-left:4px solid var(--gold); background:var(--bg); padding:8px 12px; border-radius:0 6px 6px 0; }
+code { font:.85rem var(--f-data); background:var(--bg); border:1px solid var(--line); border-radius:4px; padding:1px 5px; overflow-wrap:anywhere; }
+.foot { color:var(--muted); font-size:.85rem; }
+.toolnav { display:flex; flex-wrap:wrap; gap:2px 16px; font:600 .95rem var(--f-ui); }
+.toolnav a { color:var(--accent); text-decoration:none; padding:.2rem 0; border-bottom:2px solid transparent; }
+.toolnav a:hover { text-decoration:underline; }
+.toolnav a[aria-current] { color:var(--ink); border-bottom-color:var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="toolnav" aria-label="xScan-125"><a href="https://qxav8r.github.io/xscan-125/" aria-current="page">‹ xScan-125</a><a href="https://qxav8r.github.io/xscan-125/web/xscan-125-editor.html">Channel Editor</a><a href="https://github.com/qxav8r/xscan-125/releases/latest">Download</a><a href="https://qxav8r.github.io/xscan-125/docs/help.html">Help</a><a href="https://github.com/costamesatechsolutions/bc125at-tool">bc125at-tool ↗</a></nav>
+  <header class="hero">
+    <h1>xScan-125</h1>
+    <p>Program a Uniden BC125AT scanner from your Mac</p>
+    <span class="ver">early preview v0.1 · free &amp; open source (MIT)</span>
+  </header>
+
+  <div class="cards">
+    <a class="card" href="https://github.com/qxav8r/xscan-125/releases/latest">
+      <strong>Download xScan-125</strong>
+      <span>The Mac stack: Scanner Info, Read Banks, Export / Import Channels and Settings, all point and click.</span><br>
+      <span class="btn">Latest release</span>
+    </a>
+    <a class="card" href="web/xscan-125-editor.html">
+      <strong>Channel Editor</strong>
+      <span>Edit your banks and frequencies in the browser, sort and renumber, then save a CSV for Import Channels. Nothing is uploaded.</span><br>
+      <span class="btn ghost">Open the Editor</span>
+    </a>
+  </div>
+
+  <section>
+    <h2>What it does</h2>
+    <table>
+      <tr><td>Initialize</td><td>Checks Homebrew, libusb and bc125at-tool, then talks to the scanner. The other buttons stay off until every check passes.</td></tr>
+      <tr><td>Scanner Info</td><td>Model, firmware, what's on the display, current settings, which banks are on.</td></tr>
+      <tr><td>Read Banks</td><td>Saves every programmed channel to a CSV and opens a channel report in your browser.</td></tr>
+      <tr><td>Export / Import</td><td>Back up all channels to a CSV, or write a CSV to the scanner.</td></tr>
+      <tr><td>Settings</td><td>Volume, squelch, contrast, backlight, priority and more, read back from the scanner to confirm.</td></tr>
+      <tr><td>Load Presets, Manage Banks</td><td class="soon">Coming soon.</td></tr>
+    </table>
+    <p>Editing channels: <strong>Export Channels → <a href="web/xscan-125-editor.html">Channel Editor</a> → Save CSV → Import Channels.</strong></p>
+  </section>
+
+  <section>
+    <h2>What you need</h2>
+    <ul>
+      <li>A Mac on Apple Silicon (tested). Intel Macs should work but aren't tested yet.</li>
+      <li><strong>A free xTalk app to open the stack.</strong> xScan-125 runs inside one; it isn't a double-click app. <a href="https://github.com/emily-elizabeth/HyperXTalk">HyperXTalk</a> is recommended (built and tested in 0.9.15); OpenXTalk or LiveCode should work.</li>
+      <li><a href="https://brew.sh">Homebrew</a> and libusb: <code>brew install libusb</code></li>
+      <li><a href="https://github.com/costamesatechsolutions/bc125at-tool">bc125at-tool</a>, set up once with its <code>./setup.sh</code></li>
+    </ul>
+    <p class="tip">The Channel Editor needs none of this. It runs in any browser, including an iPad.</p>
+  </section>
+
+  <section>
+    <h2>Quick start</h2>
+    <ol>
+      <li>Install HyperXTalk.</li>
+      <li>Install Homebrew, then <code>brew install libusb</code>.</li>
+      <li>Download bc125at-tool into your home folder and run <code>./setup.sh</code> in it.</li>
+      <li>Plug in the scanner (USB) and turn it on.</li>
+      <li>Open the xScan-125 stack in HyperXTalk and click <strong>Initialize</strong>.</li>
+    </ol>
+    <p>More detail: <a href="docs/help.html">xScan-125 Help</a> · <a href="https://github.com/qxav8r/xscan-125">GitHub</a> · <a href="https://github.com/qxav8r/xscan-125/issues">Questions or bugs (Issues)</a></p>
+  </section>
+
+  <p class="foot">Scanner communication is handled by <a href="https://github.com/costamesatechsolutions/bc125at-tool">bc125at-tool</a> by Costa Mesa Tech Solutions (AGPL-3.0). Uniden and BC125AT are trademarks of Uniden; this project is not affiliated with Uniden.<br>xScan-125 · © 2026 QXAV8R · MIT License</p>
+</div>
+<!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "981093603df04250ab1ca5f7ee4a72ef"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>

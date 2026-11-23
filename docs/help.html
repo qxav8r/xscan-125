@@ -4,32 +4,52 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>xScan-125 Help</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@400;500;600&family=IBM+Plex+Sans:wght@400;600&display=swap">
 <style>
-  :root { --ink:#1d2430; --muted:#5a6475; --line:#d8dde5; --accent:#1f5fbf; --bg:#ffffff; --code:#f2f4f7; }
-  @media (prefers-color-scheme: dark) {
-    :root { --ink:#e4e8ef; --muted:#9aa4b2; --line:#333a46; --accent:#6ea2ff; --bg:#15191f; --code:#222831; }
-  }
-  body { font: 16px/1.55 -apple-system, system-ui, sans-serif; color: var(--ink); background: var(--bg);
-         max-width: 760px; margin: 32px auto; padding: 0 20px; }
-  h1 { font-size: 30px; margin: 0 0 4px; }
-  h2 { font-size: 20px; margin: 32px 0 8px; padding-bottom: 4px; border-bottom: 1px solid var(--line); }
-  h3 { font-size: 16px; margin: 18px 0 4px; }
-  .sub { color: var(--muted); margin: 0 0 20px; }
-  a { color: var(--accent); }
-  code { background: var(--code); padding: 1px 5px; border-radius: 4px; font: 14px ui-monospace, Menlo, monospace; }
-  pre { background: var(--code); padding: 10px 12px; border-radius: 6px; overflow-x: auto; font: 14px ui-monospace, Menlo, monospace; }
-  table { border-collapse: collapse; width: 100%; margin: 8px 0; }
-  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
-  th { color: var(--muted); font-weight: 600; }
-  .soon { color: var(--muted); font-style: italic; }
-  .links a { margin-right: 18px; }
-  footer { margin: 40px 0 20px; color: var(--muted); font-size: 13px; }
+:root {
+  --bg:#f3f5f7; --panel:#fff; --ink:#18212b; --muted:#5b6875; --line:#d6dde4;
+  --accent:#0b6e8a; --hero:#0f1e3a; --gold:#f5b841; --code:#eef1f4;
+  --f-brand:"Fredoka","Arial Rounded MT Bold",system-ui,sans-serif;
+  --f-ui:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,sans-serif;
+  --f-data:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg:#0f151b; --panel:#161e26; --ink:#e3e9ef; --muted:#93a1ae; --line:#2a3540; --hero:#0b1628;
+  --accent:#4fb3cf; --code:#1d2731; color-scheme:dark } }
+* { box-sizing:border-box; }
+body { margin:0 auto; max-width:900px; padding:20px max(16px,env(safe-area-inset-right)) 56px max(16px,env(safe-area-inset-left));
+       background:var(--bg); color:var(--ink); font:16px/1.55 var(--f-body); }
+.hero { background:var(--hero); color:#fff; border-radius:12px; padding:20px 24px; margin:14px 0 6px; }
+.hero h1 { font-family:var(--f-brand); font-weight:700; font-size:clamp(2rem,6vw,3rem); line-height:1; margin:0; color:var(--gold); }
+.hero h1 .sub { color:#fff; font-size:.55em; font-weight:600; }
+.hero p { margin:6px 0 0; font-family:var(--f-brand); font-weight:600; font-size:1.05rem; }
+h2 { font-family:var(--f-brand); font-weight:600; font-size:1.4rem; color:var(--accent); margin:30px 0 8px; padding-bottom:4px; border-bottom:1px solid var(--line); }
+h3 { font:600 1.05rem var(--f-ui); margin:18px 0 4px; }
+p, li { max-width:75ch; }
+a { color:var(--accent); }
+code { background:var(--code); border:1px solid var(--line); padding:1px 5px; border-radius:4px; font:.85rem var(--f-data); }
+pre { background:var(--code); border:1px solid var(--line); padding:10px 12px; border-radius:8px; overflow-x:auto; font:.85rem var(--f-data); }
+table { border-collapse:collapse; width:100%; margin:8px 0; font-size:.95rem; }
+th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+th { font:600 .72rem var(--f-ui); text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+td:first-child { font-family:var(--f-ui); font-weight:600; }
+.soon { color:var(--muted); font-style:italic; }
+.links a { margin-right:18px; }
+footer { margin:40px 0 20px; color:var(--muted); font-size:.85rem; }
+.toolnav { display:flex; flex-wrap:wrap; gap:2px 16px; font:600 .95rem var(--f-ui); }
+.toolnav a { color:var(--accent); text-decoration:none; padding:.2rem 0; border-bottom:2px solid transparent; }
+.toolnav a:hover { text-decoration:underline; }
+.toolnav a[aria-current] { color:var(--ink); border-bottom-color:var(--accent); }
 </style>
 </head>
 <body>
 
-<h1>xScan-125</h1>
-<p class="sub">Program a Uniden BC125AT scanner from your Mac. An OpenXTalk / xTalk-family stack (HyperXTalk, OpenXTalk, LiveCode).</p>
+<nav class="toolnav" aria-label="xScan-125"><a href="https://qxav8r.github.io/xscan-125/">‹ xScan-125</a><a href="https://qxav8r.github.io/xscan-125/web/xscan-125-editor.html">Channel Editor</a><a href="https://github.com/qxav8r/xscan-125/releases/latest">Download</a><a href="https://qxav8r.github.io/xscan-125/docs/help.html" aria-current="page">Help</a><a href="https://github.com/costamesatechsolutions/bc125at-tool">bc125at-tool ↗</a></nav>
+<header class="hero"><h1>xScan-125 <span class="sub">Help</span></h1>
+<p>Program a Uniden BC125AT scanner from your Mac. An OpenXTalk / xTalk-family stack (HyperXTalk, OpenXTalk, LiveCode).</p></header>
 
 <p class="links">
   <a href="https://github.com/qxav8r/xscan-125">xScan-125 on GitHub</a>
@@ -124,5 +144,6 @@ and the tenth bank — shown as <b>0</b> on the scanner — is channels 451–50
 <p>Uniden and BC125AT are trademarks of Uniden. xScan-125 is not affiliated with Uniden.</p>
 
 <footer>xScan-125 · © 2026 QXAV8R · MIT License · <a href="https://github.com/qxav8r/xscan-125">github.com/qxav8r/xscan-125</a></footer>
+<!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "981093603df04250ab1ca5f7ee4a72ef"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>
