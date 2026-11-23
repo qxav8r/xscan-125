@@ -4,6 +4,9 @@
 stack (HyperXTalk, OpenXTalk, LiveCode) that puts a point-and-click front end on
 [bc125at-tool](https://github.com/costamesatechsolutions/bc125at-tool).
 
+**Website:** [qxav8r.github.io/xscan-125](https://qxav8r.github.io/xscan-125/) · **[Channel Editor](https://qxav8r.github.io/xscan-125/web/xscan-125-editor.html)** (edit banks and
+frequencies in your browser) · [Download](https://github.com/qxav8r/xscan-125/releases/latest) · [Help](https://qxav8r.github.io/xscan-125/docs/help.html)
+
 > **Status: early preview (v0.1).** Scanner Info, Read Banks, Export/Import and
 > Settings work; Load Presets and Manage Banks are still to come. Feedback welcome
 > via Issues.
@@ -21,9 +24,11 @@ stack (HyperXTalk, OpenXTalk, LiveCode) that puts a point-and-click front end on
 | **Import Channels** | Writes a CSV file to the scanner. |
 | **Settings** | Palette with the scanner's live settings (volume, squelch, contrast, backlight, priority, key beep, key lock, weather alert, band plan, battery timer). Apply sends only what changed and re-reads the scanner to confirm each one. |
 | **Help** | Opens the help page in your browser. |
+| **Channel Editor** (web) | Not a button yet: a browser page for editing a channel CSV bank by bank — names, frequencies, mode, tone, delay, lockout, priority — with sort & renumber, change highlighting and range checks. Save CSV, then Import Channels. Runs entirely in your browser; works on an iPad. [Open it](https://qxav8r.github.io/xscan-125/web/xscan-125-editor.html). |
 | Load Presets, Manage Banks | Coming soon. |
 
-Editing channels: **Export → edit the CSV in Numbers or Excel → Import.**
+Editing channels: **Export → [Channel Editor](https://qxav8r.github.io/xscan-125/web/xscan-125-editor.html) → Save CSV → Import.**
+A spreadsheet (Numbers or Excel) works too: edit, save as CSV, Import.
 
 ## Requirements
 - macOS on Apple Silicon (tested). Intel Macs should work but aren't tested yet.
@@ -59,6 +64,8 @@ setup inside the stack, and nothing machine-specific is saved in it.
 - `bc125at-tool/` — git submodule: the original
   [bc125at-tool](https://github.com/costamesatechsolutions/bc125at-tool),
   unmodified (AGPL-3.0). Clone with `git clone --recurse-submodules`.
+- `index.html` — the xScan-125 web page (GitHub Pages)
+- `web/xscan-125-editor.html` — the browser Channel Editor
 - `web/webusb-probe.html` — experiment: can a browser talk to the scanner
   directly over WebUSB? (Chrome/Edge desktop, read-only)
 - `docs/reference/` — link to Uniden's BC125AT PC programming protocol, and
